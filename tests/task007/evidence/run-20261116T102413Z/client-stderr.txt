@@ -1,0 +1,4 @@
+﻿2026-11-16T10:24:40.291Z Remote stream window opened for relay/phone-01 (720x1560).
+2026-11-16T10:24:40.293Z Remote stream window opened for relay/phone-01 (720x1560).
+2026-11-16T10:25:07.887Z Remote stream disconnected for relay/phone-01.
+2026-11-16T10:25:07.888Z Remote stream disconnected for relay/phone-01.

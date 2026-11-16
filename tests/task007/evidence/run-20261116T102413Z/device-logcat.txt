@@ -1,0 +1,70 @@
+--------- beginning of main
+--------- beginning of system
+11-16 07:24:20.593 31369 31369 I QscnetAgent: input_bridge ready
+11-16 07:24:39.276 31369 31369 I QscnetAgent: input_bridge ready
+11-16 07:24:40.519 31369   903 I QscnetAgent: agent_registered device_id=phone-01
+11-16 07:24:42.949 31369   903 I QscnetAgent: agent_paired width=720 height=1560
+11-16 07:24:43.075 31369   903 I QscnetAgent: capture_initialized width=720 height=1560 density=280
+11-16 07:24:43.250 31369   908 I QscnetAgent: pts_clock_sample pts_us=108087669089 nano_us=108087717533 uptime_us=108087717000 elapsed_us=123531103541 rtc_ms=1794824683250
+11-16 07:24:45.825 31369   903 I QscnetAgent: stream_frames=150 encoder_dropped=0 last_pts_us=108090266038
+11-16 07:24:45.838 31369   908 I QscnetAgent: pts_clock_sample pts_us=108090283403 nano_us=108090306232 uptime_us=108090306000 elapsed_us=123533692230 rtc_ms=1794824685838
+11-16 07:24:47.379 31369 31369 I QscnetAgent: touch_down x=359 y=773 btn=1
+11-16 07:24:47.426 31369 31369 I QscnetAgent: touch_up dur_ms=48
+11-16 07:24:47.484 31369 31369 I QscnetAgent: input_gesture ok=true pts=6
+11-16 07:24:47.857 31369 31369 I QscnetAgent: touch_down x=331 y=131 btn=1
+11-16 07:24:48.229 31369   951 I QscnetAgent: control_frames=100
+11-16 07:24:48.570 31369 31369 I QscnetAgent: touch_up dur_ms=713
+11-16 07:24:49.294 31369 31369 I QscnetAgent: input_gesture ok=true pts=144
+11-16 07:24:51.921 31369 31369 I QscnetAgent: touch_down x=359 y=22 btn=1
+11-16 07:24:52.598 31369 31369 I QscnetAgent: touch_up dur_ms=677
+11-16 07:24:53.286 31369 31369 I QscnetAgent: input_gesture ok=true pts=16
+11-16 07:24:55.945 31369 31369 I QscnetAgent: input_scroll dx=0 dy=-3840
+11-16 07:24:56.066 31369 31369 I QscnetAgent: input_scroll dx=0 dy=-3840
+11-16 07:24:56.074 31369 31369 I QscnetAgent: input_gesture ok=false pts=2
+11-16 07:24:56.188 31369 31369 I QscnetAgent: input_scroll dx=0 dy=-3840
+11-16 07:24:56.196 31369 31369 I QscnetAgent: input_gesture ok=false pts=2
+11-16 07:24:56.310 31369 31369 I QscnetAgent: input_scroll dx=0 dy=-3840
+11-16 07:24:56.316 31369 31369 I QscnetAgent: input_gesture ok=false pts=2
+11-16 07:24:56.430 31369 31369 I QscnetAgent: input_scroll dx=0 dy=-3840
+11-16 07:24:56.442 31369 31369 I QscnetAgent: input_gesture ok=false pts=2
+11-16 07:24:56.623 31369 31369 I QscnetAgent: input_gesture ok=true pts=2
+11-16 07:24:57.132 31369 31369 I QscnetAgent: touch_down x=359 y=653 btn=1
+11-16 07:24:57.844 31369 31369 I QscnetAgent: touch_up dur_ms=711
+11-16 07:24:58.065 31369   903 I QscnetAgent: stream_frames=300 encoder_dropped=0 last_pts_us=108102492304
+11-16 07:24:58.073 31369   908 I QscnetAgent: pts_clock_sample pts_us=108102506885 nano_us=108102540552 uptime_us=108102540000 elapsed_us=123545926553 rtc_ms=1794824698073
+11-16 07:24:58.564 31369 31369 I QscnetAgent: input_gesture ok=true pts=16
+11-16 07:24:58.829 31369 31369 I QscnetAgent: touch_down x=359 y=1324 btn=1
+11-16 07:24:59.337 31369   951 I QscnetAgent: control_frames=200
+11-16 07:24:59.543 31369 31369 I QscnetAgent: touch_up dur_ms=714
+11-16 07:25:00.271 31369 31369 I QscnetAgent: input_gesture ok=true pts=16
+11-16 07:25:00.514 31369 31369 I QscnetAgent: touch_down x=359 y=1324 btn=1
+11-16 07:25:01.227 31369 31369 I QscnetAgent: touch_up dur_ms=713
+11-16 07:25:01.953 31369 31369 I QscnetAgent: input_gesture ok=true pts=16
+11-16 07:25:02.155 31369   903 I QscnetAgent: stream_frames=450 encoder_dropped=0 last_pts_us=108106594045
+11-16 07:25:02.168 31369   908 I QscnetAgent: pts_clock_sample pts_us=108106610429 nano_us=108106636242 uptime_us=108106636000 elapsed_us=123550022241 rtc_ms=1794824702168
+11-16 07:25:02.280 31369 31369 I QscnetAgent: touch_down x=352 y=1326 btn=1
+11-16 07:25:02.440 31369   951 I QscnetAgent: control_frames=300
+11-16 07:25:02.517 31369   951 I QscnetAgent: control_frames=400
+11-16 07:25:02.665 31369   951 I QscnetAgent: control_frames=500
+11-16 07:25:02.779 31369   951 I QscnetAgent: control_frames=600
+11-16 07:25:02.880 31369   951 I QscnetAgent: control_frames=700
+11-16 07:25:02.983 31369   951 I QscnetAgent: control_frames=800
+11-16 07:25:02.992 31369 31369 I QscnetAgent: touch_up dur_ms=713
+11-16 07:25:03.717 31369 31369 I QscnetAgent: input_gesture ok=true pts=257
+11-16 07:25:06.059 31369   903 I QscnetAgent: stream_frames=600 encoder_dropped=0 last_pts_us=108110500919
+11-16 07:25:06.074 31369   908 I QscnetAgent: pts_clock_sample pts_us=108110517563 nano_us=108110541651 uptime_us=108110541000 elapsed_us=123553927644 rtc_ms=1794824706074
+11-16 07:25:06.440 31369 31369 I QscnetAgent: touch_down x=359 y=349 btn=1
+11-16 07:25:06.488 31369 31369 I QscnetAgent: touch_up dur_ms=48
+11-16 07:25:06.539 31369 31369 I QscnetAgent: input_gesture ok=true pts=2
+11-16 07:25:07.467 31369 31369 I QscnetAgent: text_injected len=1 ok=true
+11-16 07:25:07.705 31369 31369 I QscnetAgent: text_injected len=1 ok=true
+11-16 07:25:07.974 31369 31369 I QscnetAgent: text_injected len=1 ok=true
+11-16 07:25:09.359 31369 31369 I QscnetAgent: volume dir=up
+11-16 07:25:10.141 31369 31369 I QscnetAgent: global_action=HOME
+11-16 07:25:10.203 31369 31369 I QscnetAgent: global_action=BACK
+11-16 07:25:10.546 31369   951 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 07:25:10.557 31369   903 W QscnetAgent: stream_retry=1
+11-16 07:25:20.960 31369   903 E QscnetAgent: session_failed: IOException: Conexão perdida após a segunda tentativa: Nenhum cliente confirmou o repareamento em 10 s
+11-16 07:25:20.961 31369  1315 W QscnetAgent: control_closed: Socket closed
+11-16 07:25:21.043 31369   903 I QscnetAgent: capture_stopped frames=713 dropped=0
+11-16 07:25:21.052 31369   903 I QscnetAgent: service_stopped sent_frames=712

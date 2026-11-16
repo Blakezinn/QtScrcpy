@@ -12,6 +12,8 @@
 ToolForm::ToolForm(QWidget *adsorbWidget, AdsorbPositions adsorbPos) : MagneticWidget(adsorbWidget, adsorbPos), ui(new Ui::ToolForm)
 {
     ui->setupUi(this);
+    ui->volumeUpBtn->setAccessibleName(QStringLiteral("volume_up"));
+    ui->volumeDownBtn->setAccessibleName(QStringLiteral("volume_down"));
     setWindowFlags(windowFlags() | Qt::FramelessWindowHint);
     //setWindowFlags(windowFlags() & ~Qt::WindowMinMaxButtonsHint);
 

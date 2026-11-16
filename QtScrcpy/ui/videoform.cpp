@@ -33,6 +33,7 @@
 VideoForm::VideoForm(bool framelessWindow, bool skin, bool showToolbar, int decodeMode, QWidget *parent) : QWidget(parent), ui(new Ui::videoForm), m_skin(skin), m_decodeMode(decodeMode)
 {
     ui->setupUi(this);
+    setFocusPolicy(Qt::StrongFocus);
     m_flexResizeTimer.setSingleShot(true);
     m_flexResizeTimer.setInterval(300);
     connect(&m_flexResizeTimer, &QTimer::timeout, this, [this]() {
@@ -132,6 +133,9 @@ void VideoForm::initUI()
     }
 
     ui->keepRatioWidget->setWidthHeightRatio(m_widthHeightRatio);
+    // Video frames are display-only. Give input events and keyboard focus
+    // to VideoForm so the existing Device/Controller path is exercised.
+    ui->keepRatioWidget->setAttribute(Qt::WA_TransparentForMouseEvents, true);
 
     QFont ft;
     ft.setPointSize(15);
@@ -776,13 +780,14 @@ void VideoForm::mousePressEvent(QMouseEvent *event)
 #endif
 
     QWidget *vw = videoWidget();
-    if (vw && vw->geometry().contains(event->pos())) {
+    if (vw && QRect(vw->mapTo(this, QPoint(0, 0)), vw->size()).contains(event->pos())) {
         if (!device) {
             return;
         }
         QPointF mappedPos = vw->mapFrom(this, localPos.toPoint());
         QMouseEvent newEvent(event->type(), mappedPos, globalPos, event->button(), event->buttons(), event->modifiers());
         emit device->mouseEvent(&newEvent, m_frameSize, vw->size());
+        setFocus(Qt::MouseFocusReason);
 
         // debug keymap pos
         if (event->button() == Qt::LeftButton) {
@@ -850,7 +855,7 @@ void VideoForm::mouseMoveEvent(QMouseEvent *event)
 #endif
     auto device = qsc::IDeviceManage::getInstance().getDevice(m_serial);
     QWidget *vw = videoWidget();
-    if (vw && vw->geometry().contains(event->pos())) {
+    if (vw && QRect(vw->mapTo(this, QPoint(0, 0)), vw->size()).contains(event->pos())) {
         if (!device) {
             return;
         }
@@ -869,7 +874,7 @@ void VideoForm::mouseDoubleClickEvent(QMouseEvent *event)
 {
     auto device = qsc::IDeviceManage::getInstance().getDevice(m_serial);
     QWidget *vw = videoWidget();
-    if (event->button() == Qt::LeftButton && vw && !vw->geometry().contains(event->pos())) {
+    if (event->button() == Qt::LeftButton && vw && !QRect(vw->mapTo(this, QPoint(0, 0)), vw->size()).contains(event->pos())) {
         if (!isMaximized()) {
             removeBlackRect();
         }
@@ -879,7 +884,7 @@ void VideoForm::mouseDoubleClickEvent(QMouseEvent *event)
         emit device->postBackOrScreenOn(event->type() == QEvent::MouseButtonPress);
     }
 
-    if (vw && vw->geometry().contains(event->pos())) {
+    if (vw && QRect(vw->mapTo(this, QPoint(0, 0)), vw->size()).contains(event->pos())) {
         if (!device) {
             return;
         }
@@ -904,7 +909,7 @@ void VideoForm::wheelEvent(QWheelEvent *event)
         return;
     }
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-    if (vw->geometry().contains(event->position().toPoint())) {
+    if (QRect(vw->mapTo(this, QPoint(0, 0)), vw->size()).contains(event->position().toPoint())) {
         if (!device) {
             return;
         }
@@ -912,7 +917,7 @@ void VideoForm::wheelEvent(QWheelEvent *event)
         QWheelEvent wheelEvent(
             pos, event->globalPosition(), event->pixelDelta(), event->angleDelta(), event->buttons(), event->modifiers(), event->phase(), event->inverted());
 #else
-    if (vw->geometry().contains(event->pos())) {
+    if (QRect(vw->mapTo(this, QPoint(0, 0)), vw->size()).contains(event->pos())) {
         if (!device) {
             return;
         }
@@ -930,6 +935,17 @@ void VideoForm::keyPressEvent(QKeyEvent *event)
 {
     auto device = qsc::IDeviceManage::getInstance().getDevice(m_serial);
     if (!device) {
+        return;
+    }
+    // Win32 SendInput(KEYEVENTF_UNICODE) can arrive as a QKeyEvent carrying
+    // text but no mapped Qt key. Keep the standard keycode path intact for
+    // ordinary keyboard events and send only this missing text case.
+    if (m_serial.startsWith(QStringLiteral("relay/"))
+            && event->key() == Qt::Key_unknown
+            && !event->text().isEmpty()
+            && !event->isAutoRepeat()) {
+        QString value = event->text();
+        device->postTextInput(value);
         return;
     }
     if (Qt::Key_Escape == event->key() && !event->isAutoRepeat() && isFullScreen()) {
@@ -968,6 +984,7 @@ void VideoForm::paintEvent(QPaintEvent *paint)
 void VideoForm::showEvent(QShowEvent *event)
 {
     Q_UNUSED(event)
+    setFocus(Qt::ActiveWindowFocusReason);
     // 窗口每次显示时先做一次越界检查，处理"上次退出时窗口位于副屏、
     // 本次启动副屏已不存在"导致窗口出现在屏幕外的情况。
     //

@@ -1,0 +1,7 @@
+relay 2026/11/16 07:24:18 started ctl=[::]:8443 data=[::]:9000 ttl=30m0s
+relay 2026/11/16 07:24:37 register device="phone-01" role=agent session=<redacted>
+relay 2026/11/16 07:24:39 register device="phone-01" role=client session=<redacted>
+relay 2026/11/16 07:24:39 data connected session=<redacted> slot=first
+relay 2026/11/16 07:24:39 data connected session=<redacted> slot=second
+relay 2026/11/16 07:25:07 disconnect session=<redacted> bytes_first_to_second=30001 bytes_second_to_first=9919114
+relay 2026/11/16 07:25:07 data connected session=<redacted> slot=first
