@@ -1313,14 +1313,28 @@ void Dialog::getIPbyIp()
 void Dialog::onDeviceConnected(bool success, const QString &serial, const QString &deviceName, const QSize &size)
 {
     Q_UNUSED(deviceName);
+    const bool remote = serial.startsWith(QStringLiteral("relay/"));
     if (!success) {
+        if (remote) {
+            const QString message = tr("Remote connection failed for %1. Check host, ports, token, and that the relay and agent are running.").arg(serial);
+            outLog(message);
+            qWarning().noquote() << message;
+        }
         return;
     }
     auto videoForm = new VideoForm(ui->framelessCheck->isChecked(), Config::getInstance().getSkin(), ui->showToolbar->isChecked(), ui->decodeModeBox->currentIndex());
     videoForm->setSerial(serial);
 
-    qsc::IDeviceManage::getInstance().getDevice(serial)->setUserData(static_cast<void*>(videoForm));
-    qsc::IDeviceManage::getInstance().getDevice(serial)->registerDeviceObserver(videoForm);
+    auto device = qsc::IDeviceManage::getInstance().getDevice(serial);
+    if (remote && !device) {
+        const QString message = tr("Remote stream for %1 could not open: device connection is no longer available.").arg(serial);
+        outLog(message);
+        qWarning().noquote() << message;
+        videoForm->deleteLater();
+        return;
+    }
+    device->setUserData(static_cast<void*>(videoForm));
+    device->registerDeviceObserver(videoForm);
 
 
     videoForm->showFPS(ui->fpsCheck->isChecked());
@@ -1348,6 +1362,21 @@ void Dialog::onDeviceConnected(bool success, const QString &serial, const QStrin
         // mark: resize is for fix setGeometry magneticwidget bug
         videoForm->resize(rc.size());
         videoForm->setGeometry(rc);
+    }
+    if (remote && !rc.isValid()) {
+        QScreen *scr = screen() ? screen() : QGuiApplication::primaryScreen();
+        if (scr) {
+            const QRect avail = scr->availableGeometry();
+            if (avail.isValid()) {
+                videoForm->move(avail.center() - videoForm->rect().center());
+            }
+        }
+    }
+    if (remote) {
+        const QString message = tr("Remote stream window opened for %1 (%2x%3).")
+                .arg(serial).arg(size.width()).arg(size.height());
+        outLog(message);
+        qInfo().noquote() << message;
     }
 
 #ifdef Q_OS_WIN32
