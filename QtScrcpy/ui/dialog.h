@@ -47,6 +47,7 @@ private slots:
 
     void on_updateDevice_clicked();
     void on_startServerBtn_clicked();
+    void onRemoteConnect();
     void on_stopServerBtn_clicked();
     void on_wirelessConnectBtn_clicked();
     void on_startAdbdBtn_clicked();
@@ -119,6 +120,12 @@ private:
     qsc::AdbProcess m_adb;
     QSystemTrayIcon *m_hideIcon;
     QGroupBox *m_advancedDisplayGroup = nullptr;
+    QGroupBox *m_relayGroup = nullptr;
+    QLineEdit *m_relayHostEdit = nullptr;
+    QSpinBox *m_relayCtlPortSpin = nullptr;
+    QSpinBox *m_relayDataPortSpin = nullptr;
+    QLineEdit *m_relayDeviceIdEdit = nullptr;
+    QLineEdit *m_relayTokenEdit = nullptr;
     QComboBox *m_configLanguageBox = nullptr;
     QLineEdit *m_configTitleEdit = nullptr;
     QLineEdit *m_configPushPathEdit = nullptr;

@@ -322,6 +322,31 @@ void Dialog::initUI()
 
     ui->verticalLayout_5->addWidget(ui->usbGroupBox);
     ui->verticalLayout_5->addWidget(ui->wirelessGroupBox);
+    m_relayGroup = new QGroupBox(tr("Conectar remoto"), ui->leftWidget);
+    auto *relayLayout = new QFormLayout(m_relayGroup);
+    relayLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+    relayLayout->setContentsMargins(8, 10, 8, 8);
+    m_relayHostEdit = new QLineEdit(QStringLiteral("localhost"), m_relayGroup);
+    m_relayHostEdit->setPlaceholderText(tr("Hostname do relay"));
+    relayLayout->addRow(tr("Host"), m_relayHostEdit);
+    m_relayCtlPortSpin = new QSpinBox(m_relayGroup);
+    m_relayCtlPortSpin->setRange(1, 65535);
+    m_relayCtlPortSpin->setValue(8443);
+    relayLayout->addRow(tr("Porta de controle"), m_relayCtlPortSpin);
+    m_relayDataPortSpin = new QSpinBox(m_relayGroup);
+    m_relayDataPortSpin->setRange(1, 65535);
+    m_relayDataPortSpin->setValue(9000);
+    relayLayout->addRow(tr("Porta de dados"), m_relayDataPortSpin);
+    m_relayDeviceIdEdit = new QLineEdit(QStringLiteral("phone-01"), m_relayGroup);
+    relayLayout->addRow(tr("Device ID"), m_relayDeviceIdEdit);
+    m_relayTokenEdit = new QLineEdit(m_relayGroup);
+    m_relayTokenEdit->setEchoMode(QLineEdit::Password);
+    m_relayTokenEdit->setPlaceholderText(tr("Token de autenticação"));
+    relayLayout->addRow(tr("Token"), m_relayTokenEdit);
+    auto *relayStart = new QPushButton(tr("Conectar remoto"), m_relayGroup);
+    relayLayout->addRow(relayStart);
+    connect(relayStart, &QPushButton::clicked, this, &Dialog::onRemoteConnect);
+    ui->verticalLayout_5->addWidget(m_relayGroup);
     startConfigLayout->addWidget(ui->configGroupBox);
     startConfigLayout->addWidget(ui->adbGroupBox);
     startConfigLayout->addWidget(ui->outEdit, 1);
@@ -955,6 +980,38 @@ void Dialog::on_startServerBtn_clicked()
         }
     });
     versionAdb->execute(params.serial, QStringList() << "shell" << "getprop" << "ro.build.version.sdk");
+}
+
+void Dialog::onRemoteConnect()
+{
+    const QString host = m_relayHostEdit->text().trimmed();
+    const QString deviceId = m_relayDeviceIdEdit->text().trimmed();
+    static const QRegularExpression kDeviceId(QStringLiteral("^[A-Za-z0-9_.-]+$"));
+    if (host.isEmpty() || !kDeviceId.match(deviceId).hasMatch()
+            || m_relayTokenEdit->text().isEmpty()) {
+        outLog(tr("Remote connection requires a host, a valid device ID and a token"));
+        return;
+    }
+
+    qsc::DeviceParams params;
+    params.transport = qsc::TRANSPORT_RELAY;
+    params.serial = QStringLiteral("relay/") + deviceId;
+    params.relayHost = host;
+    params.relayCtlPort = static_cast<quint16>(m_relayCtlPortSpin->value());
+    params.relayDataPort = static_cast<quint16>(m_relayDataPortSpin->value());
+    params.relayDeviceId = deviceId;
+    params.relayToken = m_relayTokenEdit->text();
+    params.display = true;
+    params.decodeMode = ui->decodeModeBox->currentIndex();
+    params.renderExpiredFrames = Config::getInstance().getRenderExpiredFrames();
+
+    // The remote path does not touch AdbProcess or the USB/device discovery UI.
+    if (!qsc::IDeviceManage::getInstance().connectDevice(params)) {
+        outLog(tr("Remote device is already connected or could not be started"));
+    } else {
+        outLog(tr("Connecting remotely to %1 via %2:%3")
+               .arg(deviceId, host).arg(params.relayCtlPort));
+    }
 }
 
 void Dialog::on_refreshCameraBtn_clicked()
