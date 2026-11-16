@@ -1,0 +1,24 @@
+--------- beginning of main
+--------- beginning of system
+11-16 08:44:14.709  6356  6356 I QscnetAgent: input_bridge ready
+11-16 08:44:32.658  6356  6356 I QscnetAgent: input_bridge ready
+11-16 08:44:33.929  6356  8912 I QscnetAgent: agent_registered device_id=phone-01
+11-16 08:44:35.849  6356  8912 I QscnetAgent: agent_paired width=720 height=1560
+11-16 08:44:35.973  6356  8912 I QscnetAgent: capture_initialized width=720 height=1560 density=280
+11-16 08:44:36.028  6356  8912 I QscnetAgent: audio_capturing sdk=29 src=default codec=pcm rate=44100 ch=1
+11-16 08:44:36.149  6356  8915 I QscnetAgent: pts_clock_sample pts_us=112880584525 nano_us=112880616711 uptime_us=112880616000 elapsed_us=128324002715 rtc_ms=1794829476149
+11-16 08:44:39.427  6356  8912 I QscnetAgent: stream_frames=150 encoder_dropped=0 last_pts_us=112883866840
+11-16 08:44:39.440  6356  8915 I QscnetAgent: pts_clock_sample pts_us=112883883122 nano_us=112883908211 uptime_us=112883908000 elapsed_us=128327294209 rtc_ms=1794829479440
+11-16 08:44:39.867  6356  6356 I QscnetAgent: tone_play ms=20000
+11-16 08:44:40.108  6356  6356 I QscnetAgent: touch_down x=359 y=777 btn=1
+11-16 08:44:40.155  6356  6356 I QscnetAgent: touch_up dur_ms=48
+11-16 08:44:40.211  6356  6356 I QscnetAgent: input_gesture ok=true pts=2
+11-16 08:44:40.501  6356  6356 I QscnetAgent: global_action=HOME
+11-16 08:44:45.109  6356  6356 I QscnetAgent: tone_stop
+11-16 08:44:45.323  6356  8931 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 08:44:45.378  6356  8912 W QscnetAgent: stream_retry=1
+11-16 08:44:55.746  6356  8912 E QscnetAgent: session_failed: IOException: Conexão perdida após a segunda tentativa: Nenhum cliente confirmou o repareamento em 10 s
+11-16 08:44:55.748  6356  9035 W QscnetAgent: control_closed: Socket closed
+11-16 08:44:55.854  6356  8912 I QscnetAgent: audio_stopped
+11-16 08:44:55.908  6356  8912 I QscnetAgent: capture_stopped frames=229 dropped=0
+11-16 08:44:55.917  6356  8912 I QscnetAgent: service_stopped sent_frames=229
