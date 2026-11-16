@@ -12,9 +12,15 @@
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QGuiApplication>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QKeyEvent>
 #include <QComboBox>
 #include <QLineEdit>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QPushButton>
 #include <QRandomGenerator>
 #include <QRegularExpression>
@@ -25,6 +31,9 @@
 #include <QStandardPaths>
 #include <QStyledItemDelegate>
 #include <QSpinBox>
+#include <QSslCertificate>
+#include <QSslConfiguration>
+#include <QSslSocket>
 #include <QTabWidget>
 #include <QTime>
 #include <QTimer>
@@ -349,6 +358,25 @@ void Dialog::initUI()
     relayStart->setObjectName(QStringLiteral("relayConnectButton"));
     relayLayout->addRow(relayStart);
     connect(relayStart, &QPushButton::clicked, this, &Dialog::onRemoteConnect);
+    m_devicesNam = new QNetworkAccessManager(this);
+    m_devicesGroup = new QGroupBox(tr("Dispositivos"), m_relayGroup);
+    auto *devicesLayout = new QVBoxLayout(m_devicesGroup);
+    m_devicesList = new QListWidget(m_devicesGroup);
+    m_devicesList->setObjectName(QStringLiteral("relayDevicesList"));
+    m_devicesList->setMinimumHeight(82);
+    devicesLayout->addWidget(m_devicesList);
+    m_devicesRefreshBtn = new QPushButton(tr("Atualizar"), m_devicesGroup);
+    m_devicesRefreshBtn->setObjectName(QStringLiteral("relayDevicesRefreshButton"));
+    devicesLayout->addWidget(m_devicesRefreshBtn);
+    relayLayout->addRow(m_devicesGroup);
+    connect(m_devicesRefreshBtn, &QPushButton::clicked,
+            this, &Dialog::refreshDeviceList);
+    connect(m_devicesList, &QListWidget::itemDoubleClicked, this,
+            [this](QListWidgetItem *item) {
+        if (item && m_relayDeviceIdEdit) {
+            m_relayDeviceIdEdit->setText(item->data(Qt::UserRole).toString());
+        }
+    });
     ui->verticalLayout_5->addWidget(m_relayGroup);
     startConfigLayout->addWidget(ui->configGroupBox);
     startConfigLayout->addWidget(ui->adbGroupBox);
@@ -386,6 +414,74 @@ void Dialog::initUI()
     ui->verticalLayout_5->setStretch(3, 0);
     ui->verticalLayout_4->setStretch(2, 1);
     ui->verticalLayout_6->setStretch(0, 1);
+}
+
+void Dialog::refreshDeviceList()
+{
+    const QString host = m_relayHostEdit->text().trimmed();
+    const QString token = m_relayTokenEdit->text().trimmed();
+    if (host.isEmpty() || token.isEmpty()) {
+        outLog(tr("Configure host e token antes de listar dispositivos."));
+        return;
+    }
+    const QString certPath = qEnvironmentVariable("QSC_RELAY_CERT").trimmed();
+    const bool tlsEnabled = !certPath.isEmpty();
+    QUrl url;
+    url.setScheme(tlsEnabled ? QStringLiteral("https") : QStringLiteral("http"));
+    url.setHost(host);
+    url.setPort(m_relayCtlPortSpin->value());
+    url.setPath(QStringLiteral("/v1/devices"));
+    QNetworkRequest request(url);
+    request.setRawHeader("Authorization", QByteArrayLiteral("Bearer ") + token.toUtf8());
+    if (tlsEnabled) {
+        QFile certFile(certPath);
+        if (!certFile.open(QIODevice::ReadOnly) || !QSslSocket::supportsSsl()) {
+            outLog(tr("Certificado TLS indisponível."));
+            return;
+        }
+        const QList<QSslCertificate> certificates =
+                QSslCertificate::fromData(certFile.readAll(), QSsl::Pem);
+        if (certificates.isEmpty()) {
+            outLog(tr("Certificado TLS inválido."));
+            return;
+        }
+        QSslConfiguration config = QSslConfiguration::defaultConfiguration();
+        config.setCaCertificates(certificates);
+        config.setPeerVerifyMode(QSslSocket::VerifyPeer);
+        config.setProtocol(QSsl::TlsV1_2OrLater);
+        request.setSslConfiguration(config);
+    }
+    m_devicesRefreshBtn->setEnabled(false);
+    QNetworkReply *reply = m_devicesNam->get(request);
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+        m_devicesRefreshBtn->setEnabled(true);
+        if (reply->error() != QNetworkReply::NoError) {
+            outLog(tr("Falha ao listar dispositivos: %1").arg(reply->errorString()));
+            return;
+        }
+        QJsonParseError error;
+        const QJsonDocument document = QJsonDocument::fromJson(reply->readAll(), &error);
+        if (error.error != QJsonParseError::NoError || !document.isArray()) {
+            outLog(tr("Resposta inválida do relay."));
+            return;
+        }
+        m_devicesList->clear();
+        const QJsonArray devices = document.array();
+        for (const QJsonValue &value : devices) {
+            if (!value.isObject()) continue;
+            const QJsonObject entry = value.toObject();
+            const QString deviceId = entry.value(QStringLiteral("device_id")).toString();
+            const QString status = entry.value(QStringLiteral("status")).toString();
+            if (deviceId.isEmpty()) continue;
+            auto *item = new QListWidgetItem(deviceId + QStringLiteral(" — ") + status,
+                                             m_devicesList);
+            item->setData(Qt::UserRole, deviceId);
+        }
+        m_devicesList->sortItems();
+        qInfo() << "devices_list_loaded count=" << m_devicesList->count();
+        outLog(tr("Dispositivos listados: %1").arg(m_devicesList->count()));
+    });
 }
 
 void Dialog::initAdvancedDisplayUi()

@@ -25,6 +25,7 @@ class QComboBox;
 class QLineEdit;
 class QCheckBox;
 class QGroupBox;
+class QNetworkAccessManager;
 class QPushButton;
 class QSpinBox;
 class Dialog : public QWidget
@@ -111,6 +112,7 @@ private:
 
     void showPortEditMenu(const QPoint &pos);
     void syncPresetLevelToUi();
+    void refreshDeviceList();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -126,6 +128,10 @@ private:
     QSpinBox *m_relayDataPortSpin = nullptr;
     QLineEdit *m_relayDeviceIdEdit = nullptr;
     QLineEdit *m_relayTokenEdit = nullptr;
+    QGroupBox *m_devicesGroup = nullptr;
+    QListWidget *m_devicesList = nullptr;
+    QPushButton *m_devicesRefreshBtn = nullptr;
+    QNetworkAccessManager *m_devicesNam = nullptr;
     QComboBox *m_configLanguageBox = nullptr;
     QLineEdit *m_configTitleEdit = nullptr;
     QLineEdit *m_configPushPathEdit = nullptr;
