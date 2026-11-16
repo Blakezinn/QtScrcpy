@@ -1,6 +1,7 @@
 ﻿#include <QDebug>
 #include <QAbstractItemView>
 #include <QDesktopServices>
+#include <QDateTime>
 #include <QCheckBox>
 #include <QDir>
 #include <QFile>
@@ -340,10 +341,12 @@ void Dialog::initUI()
     m_relayDeviceIdEdit = new QLineEdit(QStringLiteral("phone-01"), m_relayGroup);
     relayLayout->addRow(tr("Device ID"), m_relayDeviceIdEdit);
     m_relayTokenEdit = new QLineEdit(m_relayGroup);
+    m_relayTokenEdit->setObjectName(QStringLiteral("relayTokenEdit"));
     m_relayTokenEdit->setEchoMode(QLineEdit::Password);
     m_relayTokenEdit->setPlaceholderText(tr("Token de autenticação"));
     relayLayout->addRow(tr("Token"), m_relayTokenEdit);
     auto *relayStart = new QPushButton(tr("Conectar remoto"), m_relayGroup);
+    relayStart->setObjectName(QStringLiteral("relayConnectButton"));
     relayLayout->addRow(relayStart);
     connect(relayStart, &QPushButton::clicked, this, &Dialog::onRemoteConnect);
     ui->verticalLayout_5->addWidget(m_relayGroup);
@@ -1006,8 +1009,15 @@ void Dialog::onRemoteConnect()
     params.renderExpiredFrames = Config::getInstance().getRenderExpiredFrames();
 
     // The remote path does not touch AdbProcess or the USB/device discovery UI.
-    if (!qsc::IDeviceManage::getInstance().connectDevice(params)) {
-        outLog(tr("Remote device is already connected or could not be started"));
+    auto &devices = qsc::IDeviceManage::getInstance();
+    if (devices.getDevice(params.serial)) {
+        const QString message = tr("Remote device %1 is already connected.").arg(params.serial);
+        outLog(message);
+        qInfo().noquote() << message;
+    } else if (!devices.connectDevice(params)) {
+        const QString message = tr("Remote connection could not start for %1.").arg(params.serial);
+        outLog(message);
+        qWarning().noquote() << message;
     } else {
         outLog(tr("Connecting remotely to %1 via %2:%3")
                .arg(deviceId, host).arg(params.relayCtlPort));
@@ -1243,6 +1253,20 @@ void Dialog::outLog(const QString &log, bool newLine)
 {
     // avoid sub thread update ui
     QString backLog = log;
+    // The Windows GUI process does not reliably forward Qt's default
+    // message handler to redirected stderr. Persist only neutral remote
+    // lifecycle events so a session test can verify the same text as outEdit.
+    if (backLog.startsWith(QStringLiteral("Remote device "))
+            || backLog.startsWith(QStringLiteral("Remote connection "))
+            || backLog.startsWith(QStringLiteral("Remote stream "))) {
+        QFile file(QCoreApplication::applicationDirPath() + QStringLiteral("/startup.stderr.log"));
+        if (file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+            const QByteArray line = (QDateTime::currentDateTimeUtc().toString(
+                        QStringLiteral("yyyy-MM-ddTHH:mm:ss.zzzZ ")) + backLog + QLatin1Char('\n')).toUtf8();
+            file.write(line);
+            file.close();
+        }
+    }
     QTimer::singleShot(0, this, [this, backLog, newLine]() {
         ui->outEdit->append(backLog);
         if (newLine) {
@@ -1389,6 +1413,11 @@ void Dialog::onDeviceConnected(bool success, const QString &serial, const QStrin
 
 void Dialog::onDeviceDisconnected(QString serial)
 {
+    if (serial.startsWith(QStringLiteral("relay/"))) {
+        const QString message = tr("Remote stream disconnected for %1.").arg(serial);
+        outLog(message);
+        qInfo().noquote() << message;
+    }
     GroupController::instance().removeDevice(serial);
     auto device = qsc::IDeviceManage::getInstance().getDevice(serial);
     if (!device) {

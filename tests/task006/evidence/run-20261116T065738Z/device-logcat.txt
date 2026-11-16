@@ -1,0 +1,10 @@
+--------- beginning of system
+--------- beginning of crash
+--------- beginning of main
+11-16 03:15:27.480 11587 16018 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 03:15:27.484 11587 12429 E QscnetAgent: session_failed: IOException: Conexão perdida após a segunda tentativa: Connection reset
+11-16 03:15:27.601 11587 12429 I QscnetAgent: capture_stopped frames=2394 dropped=0
+11-16 03:15:27.621 11587 12429 I QscnetAgent: service_stopped sent_frames=2346
+11-16 03:58:13.329 11587 19136 W QscnetAgent: registration_retry=1
+11-16 03:58:13.353 11587 19136 E QscnetAgent: session_failed: IOException: Registro rejeitado pelo relay (HTTP 401)
+11-16 03:58:13.366 11587 19136 I QscnetAgent: service_stopped sent_frames=0

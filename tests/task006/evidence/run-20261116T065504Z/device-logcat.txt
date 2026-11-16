@@ -1,0 +1,11 @@
+--------- beginning of system
+--------- beginning of crash
+--------- beginning of main
+11-16 03:13:15.896 11587 12429 I QscnetAgent: stream_frames=2250 encoder_dropped=0 last_pts_us=93000289791
+11-16 03:13:15.911 11587 12431 I QscnetAgent: pts_clock_sample pts_us=93000306995 nano_us=93000379034 uptime_us=93000379000 elapsed_us=108443765031 rtc_ms=1794809595911
+11-16 03:14:57.232 11587 12445 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 03:14:57.237 11587 12429 W QscnetAgent: stream_retry=1
+11-16 03:15:27.480 11587 16018 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 03:15:27.484 11587 12429 E QscnetAgent: session_failed: IOException: Conexão perdida após a segunda tentativa: Connection reset
+11-16 03:15:27.601 11587 12429 I QscnetAgent: capture_stopped frames=2394 dropped=0
+11-16 03:15:27.621 11587 12429 I QscnetAgent: service_stopped sent_frames=2346
