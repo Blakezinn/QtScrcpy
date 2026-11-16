@@ -1,0 +1,27 @@
+adb path: F:/Documents/Craft Anything/QtScrcpy-portMonito/repos/QtScrcpy/out/deploy/adb.exe
+"F:\\Documents\\Craft Anything\\QtScrcpy-portMonito\\repos\\QtScrcpy\\out\\deploy/adb.exe" "-s LMX430CUAEPZJJEEUC push F:\\Documents\\Craft Anything\\QtScrcpy-portMonito\\repos\\QtScrcpy\\out\\deploy/scrcpy-server /data/local/tmp/scrcpy-server.jar"
+AdbProcessImpl::out:F:\Documents\Craft Anything\QtScrcpy-portMonito\repos\QtScrcpy\out\deploy/scrcpy-server: 1 file pushed, 0 skipped. 25.4 MB/s (733706 bytes in 0.028s)
+"F:\\Documents\\Craft Anything\\QtScrcpy-portMonito\\repos\\QtScrcpy\\out\\deploy/adb.exe" "-s LMX430CUAEPZJJEEUC forward tcp:28183 localabstract:scrcpy_00002002"
+adb return  0 exit status  QProcess::NormalExit
+AdbProcessImpl::out:28183
+"F:\\Documents\\Craft Anything\\QtScrcpy-portMonito\\repos\\QtScrcpy\\out\\deploy/adb.exe" "-s LMX430CUAEPZJJEEUC shell CLASSPATH=/data/local/tmp/scrcpy-server.jar app_process / com.genymobile.scrcpy.Server 4.1 video_bit_rate=2000000 log_level=debug max_size=720 max_fps=30 capture_orientation=0 tunnel_forward=true audio=false scid=00002002"
+adb return  0 exit status  QProcess::NormalExit
+video socket connect to server read device info failed, try again
+video socket connect to server read device info failed, try again
+AdbProcessImpl::out:[server] INFO: Device: [LGE] lge LM-X430 (Android 10)
+video socket connect to server read device info failed, try again
+readInfo wait time: 286
+"F:\\Documents\\Craft Anything\\QtScrcpy-portMonito\\repos\\QtScrcpy\\out\\deploy/adb.exe" "-s LMX430CUAEPZJJEEUC forward --remove tcp:28183"
+SESSION_CONNECTED true QSize(332, 720)
+server start finish in 1.807s
+AdbProcessImpl::out:[server] DEBUG: Using video encoder: 'OMX.MTK.VIDEO.ENCODER.AVC'
+
+[server] DEBUG: Video codec size alignment requirement: 2px
+
+[server] DEBUG: Display: using SurfaceControl API
+adb return  0 exit status  QProcess::NormalExit
+DECODED_FRAMES 25
+End of frames
+qprocess start error:F:\Documents\Craft Anything\QtScrcpy-portMonito\repos\QtScrcpy\out\deploy/adb.exe -s LMX430CUAEPZJJEEUC shell CLASSPATH=/data/local/tmp/scrcpy-server.jar app_process / com.genymobile.scrcpy.Server 4.1 video_bit_rate=2000000 log_level=debug max_size=720 max_fps=30 capture_orientation=0 tunnel_forward=true audio=false scid=00002002
+adb return  62097 exit status  QProcess::CrashExit
+SMOKE_EXIT 0

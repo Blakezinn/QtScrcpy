@@ -1,0 +1,11 @@
+audio_stream_open rate=44100 ch=1 codec=pcm_s16le
+audio_dump_wrote_bytes=307200
+audio_stream_closed bytes=307200
+relay_reconnect attempt=1
+relay_reconnect ok
+audio_stream_open rate=44100 ch=1 codec=pcm_s16le
+audio_dump_wrote_bytes=126976
+audio_stream_closed bytes=126976
+relay_reconnect attempt=1
+relay_reconnect attempt=2
+relay_reconnect attempt=3
