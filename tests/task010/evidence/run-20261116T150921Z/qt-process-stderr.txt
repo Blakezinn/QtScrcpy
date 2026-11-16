@@ -1,0 +1,34 @@
+relay_tls_enabled
+relay_tls_handshake_ok
+jitter_buffer_init capacity_ms=200
+audio_stream_open rate=44100 ch=1 codec=pcm_s16le
+jitter_dropped_bytes=51992
+jitter_dropped_bytes=28432
+jitter_dropped_bytes=31332
+jitter_dropped_bytes=33664
+jitter_dropped_bytes=31332
+jitter_dropped_bytes=31900
+jitter_dropped_bytes=33664
+jitter_dropped_bytes=29568
+jitter_dropped_bytes=33096
+audio_underruns=155
+jitter_dropped_bytes=31900
+jitter_dropped_bytes=8132
+audio_dump_wrote_bytes=872448
+audio_stream_closed bytes=872448
+relay_reconnect attempt=1
+relay_tls_enabled
+relay_tls_handshake_ok
+relay_reconnect ok
+jitter_buffer_init capacity_ms=200
+audio_stream_open rate=44100 ch=1 codec=pcm_s16le
+jitter_dropped_bytes=35936
+jitter_dropped_bytes=4036
+audio_dump_wrote_bytes=122880
+audio_stream_closed bytes=122880
+relay_reconnect attempt=1
+relay_tls_enabled
+relay_reconnect attempt=2
+relay_tls_enabled
+relay_reconnect attempt=3
+relay_tls_enabled

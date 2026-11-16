@@ -1,0 +1,30 @@
+--------- beginning of main
+--------- beginning of system
+11-16 12:09:29.596 23204 23204 I QscnetAgent: input_bridge ready
+11-16 12:09:47.411 23204 23204 I QscnetAgent: input_bridge ready
+11-16 12:09:48.647 23204 25367 I QscnetAgent: tls_cert_loaded path=/data/data/br.net.qtscrcpy.agent/files/cert.pem
+11-16 12:09:48.718 23204 25367 I QscnetAgent: agent_registered device_id=phone-01
+11-16 12:09:48.734 23204 25367 I QscnetAgent: tls_enabled
+11-16 12:09:49.064 23204 23204 I QscnetAgent: tone_play ms=30000
+11-16 12:09:51.021 23204 25367 I QscnetAgent: agent_paired width=720 height=1560
+11-16 12:09:51.153 23204 25367 I QscnetAgent: capture_initialized width=720 height=1560 density=280
+11-16 12:09:51.220 23204 25367 I QscnetAgent: audio_capturing sdk=29 src=default codec=pcm rate=44100 ch=1
+11-16 12:09:51.338 23204 25384 I QscnetAgent: pts_clock_sample pts_us=125195775353 nano_us=125195806149 uptime_us=125195806000 elapsed_us=140639192151 rtc_ms=1794841791338
+11-16 12:09:54.534 23204 25367 I QscnetAgent: stream_frames=150 encoder_dropped=0 last_pts_us=125198973865
+11-16 12:09:54.546 23204 25384 I QscnetAgent: pts_clock_sample pts_us=125198990057 nano_us=125199013816 uptime_us=125199013000 elapsed_us=140642399815 rtc_ms=1794841794546
+11-16 12:10:01.207 23204 23204 I QscnetAgent: tone_stop
+11-16 12:10:01.268 23204 25398 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 12:10:01.333 23204 25367 W QscnetAgent: stream_retry=1
+11-16 12:10:01.886 23204 25367 W QscnetAgent: stream_reregister=1
+11-16 12:10:01.994 23204 25367 I QscnetAgent: agent_registered device_id=phone-01
+11-16 12:10:03.657 23204 25367 I QscnetAgent: stream_repaired sent_frames=174
+11-16 12:10:03.657 23204 25367 I QscnetAgent: agent_paired width=720 height=1560
+11-16 12:10:03.657 23204 25367 I QscnetAgent: stream_repair_ok session=3859f27b
+11-16 12:10:04.861 23204 25447 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 12:10:04.867 23204 25367 W QscnetAgent: stream_retry=1
+11-16 12:10:15.727 23204 25367 W QscnetAgent: stream_reregister=1
+11-16 12:10:17.768 23204 25367 E QscnetAgent: session_failed: IOException: Conexão perdida após reconexão de registro: Connection closed by peer
+11-16 12:10:17.884 23204 25367 I QscnetAgent: audio_stopped
+11-16 12:10:17.933 23204 25367 I QscnetAgent: capture_stopped frames=174 dropped=0
+11-16 12:10:17.940 23204 25367 I QscnetAgent: service_stopped sent_frames=174
+11-16 12:10:40.707 23204 23204 I QscnetAgent: tone_stop
