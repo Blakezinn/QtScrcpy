@@ -1,0 +1,28 @@
+--------- beginning of system
+--------- beginning of main
+11-16 10:42:28.726 15713 15713 I QscnetAgent: input_bridge ready
+11-16 10:42:47.566 15713 15713 I QscnetAgent: input_bridge ready
+11-16 10:42:48.830 15713 18542 I QscnetAgent: agent_registered device_id=phone-01
+11-16 10:42:51.095 15713 18542 I QscnetAgent: agent_paired width=720 height=1560
+11-16 10:42:51.233 15713 18542 I QscnetAgent: capture_initialized width=720 height=1560 density=280
+11-16 10:42:51.287 15713 18542 I QscnetAgent: audio_capturing sdk=29 src=default codec=pcm rate=44100 ch=1
+11-16 10:42:51.430 15713 18546 I QscnetAgent: pts_clock_sample pts_us=119975866087 nano_us=119975897944 uptime_us=119975897000 elapsed_us=135419283954 rtc_ms=1794836571430
+11-16 10:42:54.925 15713 18542 I QscnetAgent: stream_frames=150 encoder_dropped=0 last_pts_us=119979364540
+11-16 10:42:54.938 15713 18546 I QscnetAgent: pts_clock_sample pts_us=119979381046 nano_us=119979406082 uptime_us=119979406000 elapsed_us=135422792083 rtc_ms=1794836574938
+11-16 10:42:55.064 15713 18560 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 10:42:55.075 15713 18542 W QscnetAgent: stream_retry=1
+11-16 10:42:56.089 15713 18594 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 10:42:56.206 15713 18542 W QscnetAgent: stream_reregister=1
+11-16 10:42:56.249 15713 18542 I QscnetAgent: agent_registered device_id=phone-01
+11-16 10:42:57.558 15713 18542 I QscnetAgent: stream_repaired sent_frames=167
+11-16 10:42:57.558 15713 18542 I QscnetAgent: agent_paired width=720 height=1560
+11-16 10:42:57.558 15713 18542 I QscnetAgent: stream_repair_ok session=fd48960d
+11-16 10:42:58.873 15713 18596 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 10:42:58.970 15713 18542 W QscnetAgent: stream_retry=1
+11-16 10:43:00.992 15713 18597 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 10:43:01.132 15713 18542 W QscnetAgent: stream_reregister=1
+11-16 10:43:03.172 15713 18542 E QscnetAgent: session_failed: IOException: Conexão perdida após reconexão de registro: unexpected end of stream on com.android.okhttp.Address@d42897ae
+11-16 10:43:03.273 15713 18542 I QscnetAgent: audio_stopped
+11-16 10:43:03.319 15713 18542 I QscnetAgent: capture_stopped frames=169 dropped=0
+11-16 10:43:03.328 15713 18542 I QscnetAgent: service_stopped sent_frames=168
+11-16 10:43:33.762 15713 15713 I QscnetAgent: tone_stop

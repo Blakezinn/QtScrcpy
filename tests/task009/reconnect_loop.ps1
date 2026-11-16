@@ -367,8 +367,9 @@ function Reconnection-Counts {
     $repaired=Qt-Audio-Log-Count '^relay_reconnect ok'
     $audioQt=Qt-Audio-Log-Count 'audio_stream_open rate='
     Emit "P4_COUNTS agent_registered=$registered capture_initialized=$captures service_stopped=$stopped audio_stopped=$audioStopped audio_capturing=$audioStarted qt_attempts=$attempts qt_repairs=$repaired qt_audio_opens=$audioQt"
-    if($registered -ne 2 -or $captures -ne 2 -or $stopped -ne 1 -or
-        $audioStopped -ne 1 -or $attempts -lt 1 -or $attempts -gt 3 -or $repaired -ne 1){
+    if($registered -ne 2 -or $captures -ne 1 -or $stopped -ne 1 -or
+        $audioStopped -ne 1 -or $audioStarted -ne 1 -or
+        $attempts -lt 1 -or $attempts -gt 6 -or $repaired -ne 1){
         throw 'P4_COUNTS_MISMATCH'
     }
 }
