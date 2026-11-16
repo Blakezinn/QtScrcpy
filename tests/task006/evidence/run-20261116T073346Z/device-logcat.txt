@@ -1,0 +1,40 @@
+--------- beginning of main
+--------- beginning of system
+11-16 04:36:00.905 11587 27305 I QscnetAgent: agent_registered device_id=phone-01
+11-16 04:36:04.186 11587 27305 I QscnetAgent: agent_paired width=720 height=1560
+11-16 04:36:04.313 11587 27305 I QscnetAgent: capture_initialized width=720 height=1560 density=280
+11-16 04:36:04.499 11587 27311 I QscnetAgent: pts_clock_sample pts_us=97968902846 nano_us=97968966639 uptime_us=97968966000 elapsed_us=113412352636 rtc_ms=1794814564499
+11-16 04:36:05.473 11587 27321 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 04:36:05.613 11587 27305 W QscnetAgent: stream_retry=1
+11-16 04:36:10.918 11587 27305 I QscnetAgent: stream_frames=150 encoder_dropped=0 last_pts_us=97974994694
+11-16 04:36:10.944 11587 27311 I QscnetAgent: pts_clock_sample pts_us=97975028088 nano_us=97975411794 uptime_us=97975411000 elapsed_us=113418797791 rtc_ms=1794814570944
+11-16 04:36:15.610 11587 27305 I QscnetAgent: stream_frames=300 encoder_dropped=0 last_pts_us=97979685707
+11-16 04:36:15.639 11587 27311 I QscnetAgent: pts_clock_sample pts_us=97979719558 nano_us=97980106665 uptime_us=97980106000 elapsed_us=113423492666 rtc_ms=1794814575639
+11-16 04:36:20.301 11587 27305 I QscnetAgent: stream_frames=450 encoder_dropped=0 last_pts_us=97984377734
+11-16 04:36:20.328 11587 27311 I QscnetAgent: pts_clock_sample pts_us=97984410741 nano_us=97984796159 uptime_us=97984796000 elapsed_us=113428182152 rtc_ms=1794814580328
+11-16 04:36:25.139 11587 27305 I QscnetAgent: stream_frames=600 encoder_dropped=0 last_pts_us=97989298293
+11-16 04:36:25.163 11587 27311 I QscnetAgent: pts_clock_sample pts_us=97989314850 nano_us=97989630713 uptime_us=97989630000 elapsed_us=113433016709 rtc_ms=1794814585163
+11-16 04:36:29.156 11587 27305 I QscnetAgent: stream_frames=750 encoder_dropped=0 last_pts_us=97993288437
+11-16 04:36:29.180 11587 27311 I QscnetAgent: pts_clock_sample pts_us=97993322000 nano_us=97993648172 uptime_us=97993648000 elapsed_us=113437034164 rtc_ms=1794814589180
+11-16 04:36:33.173 11587 27305 I QscnetAgent: stream_frames=900 encoder_dropped=0 last_pts_us=97997312853
+11-16 04:36:33.198 11587 27311 I QscnetAgent: pts_clock_sample pts_us=97997346006 nano_us=97997665232 uptime_us=97997665000 elapsed_us=113441051231 rtc_ms=1794814593197
+11-16 04:36:37.210 11587 27305 I QscnetAgent: stream_frames=1050 encoder_dropped=0 last_pts_us=98001336173
+11-16 04:36:37.231 11587 27311 I QscnetAgent: pts_clock_sample pts_us=98001353043 nano_us=98001699025 uptime_us=98001699000 elapsed_us=113445085016 rtc_ms=1794814597231
+11-16 04:36:41.201 11587 27305 I QscnetAgent: stream_frames=1200 encoder_dropped=0 last_pts_us=98005360160
+11-16 04:36:41.226 11587 27311 I QscnetAgent: pts_clock_sample pts_us=98005393673 nano_us=98005694086 uptime_us=98005694000 elapsed_us=113449080078 rtc_ms=1794814601226
+11-16 04:36:45.228 11587 27305 I QscnetAgent: stream_frames=1350 encoder_dropped=0 last_pts_us=98009367176
+11-16 04:36:45.253 11587 27311 I QscnetAgent: pts_clock_sample pts_us=98009383864 nano_us=98009721336 uptime_us=98009721000 elapsed_us=113453107329 rtc_ms=1794814605253
+11-16 04:36:49.243 11587 27305 I QscnetAgent: stream_frames=1500 encoder_dropped=0 last_pts_us=98013526405
+11-16 04:36:49.269 11587 27311 I QscnetAgent: pts_clock_sample pts_us=98013542470 nano_us=98013736860 uptime_us=98013736000 elapsed_us=113457122938 rtc_ms=1794814609269
+11-16 04:36:53.274 11587 27305 I QscnetAgent: stream_frames=1650 encoder_dropped=0 last_pts_us=98017398130
+11-16 04:36:53.298 11587 27311 I QscnetAgent: pts_clock_sample pts_us=98017431788 nano_us=98017765402 uptime_us=98017765000 elapsed_us=113461151395 rtc_ms=1794814613297
+11-16 04:36:57.283 11587 27305 I QscnetAgent: stream_frames=1800 encoder_dropped=0 last_pts_us=98021440588
+11-16 04:36:57.309 11587 27311 I QscnetAgent: pts_clock_sample pts_us=98021457185 nano_us=98021776825 uptime_us=98021776000 elapsed_us=113465162818 rtc_ms=1794814617309
+11-16 04:37:01.271 11587 27305 I QscnetAgent: stream_frames=1950 encoder_dropped=0 last_pts_us=98025412562
+11-16 04:37:01.292 11587 27311 I QscnetAgent: pts_clock_sample pts_us=98025445720 nano_us=98025760051 uptime_us=98025760000 elapsed_us=113469146048 rtc_ms=1794814621292
+11-16 04:37:05.307 11587 27305 I QscnetAgent: stream_frames=2100 encoder_dropped=0 last_pts_us=98029453093
+11-16 04:37:05.331 11587 27311 I QscnetAgent: pts_clock_sample pts_us=98029469679 nano_us=98029798533 uptime_us=98029798000 elapsed_us=113473184525 rtc_ms=1794814625331
+11-16 04:37:07.321 11587 27324 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 04:37:07.345 11587 27305 E QscnetAgent: session_failed: IOException: Conexão perdida após a segunda tentativa: Socket is closed
+11-16 04:37:07.582 11587 27305 I QscnetAgent: capture_stopped frames=2176 dropped=0
+11-16 04:37:07.589 11587 27305 I QscnetAgent: service_stopped sent_frames=2175

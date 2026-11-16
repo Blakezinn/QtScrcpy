@@ -1,0 +1,18 @@
+﻿2026-11-16T07:52:39.203Z Remote stream window opened for relay/phone-01 (720x1560).
+2026-11-16T07:52:39.204Z Remote stream window opened for relay/phone-01 (720x1560).
+2026-11-16T07:52:39.231Z Remote device relay/phone-01 is already connected.
+2026-11-16T07:52:39.232Z Remote device relay/phone-01 is already connected.
+2026-11-16T07:52:40.535Z Remote stream disconnected for relay/phone-01.
+2026-11-16T07:52:40.536Z Remote stream disconnected for relay/phone-01.
+2026-11-16T07:52:40.917Z Remote stream window opened for relay/phone-01 (720x1560).
+2026-11-16T07:52:40.917Z Remote stream window opened for relay/phone-01 (720x1560).
+2026-11-16T07:53:42.551Z Remote stream disconnected for relay/phone-01.
+2026-11-16T07:53:42.553Z Remote stream disconnected for relay/phone-01.
+2026-11-16T07:53:42.941Z Remote stream window opened for relay/phone-01 (720x1560).
+2026-11-16T07:53:42.941Z Remote stream window opened for relay/phone-01 (720x1560).
+2026-11-16T07:53:48.476Z Remote stream disconnected for relay/phone-01.
+2026-11-16T07:53:48.476Z Remote stream disconnected for relay/phone-01.
+2026-11-16T07:55:56.759Z Remote stream window opened for relay/phone-01 (720x1560).
+2026-11-16T07:55:56.759Z Remote stream window opened for relay/phone-01 (720x1560).
+2026-11-16T07:56:07.371Z Remote stream disconnected for relay/phone-01.
+2026-11-16T07:56:07.372Z Remote stream disconnected for relay/phone-01.

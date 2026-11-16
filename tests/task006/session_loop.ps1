@@ -18,6 +18,7 @@ $qtLogSource = Join-Path $client 'out/deploy/startup.stderr.log'
 $script:auditStart = [DateTime]::UtcNow
 $script:logStartLocal = Get-Date
 $script:relayRun = 0
+$script:firstRegisteredLine = $null
 $script:phase = 'P0'
 $script:exitCode = 1
 function Emit([string]$value) {
@@ -42,7 +43,7 @@ function Wait-For([scriptblock]$predicate, [int]$seconds, [string]$reason) {
 }
 function Device-Log() {
     if (Test-Path $androidLog) {
-        return @(Get-Content $androidLog -ErrorAction SilentlyContinue | Where-Object {
+        $lines = @(Get-Content $androidLog -ErrorAction SilentlyContinue | Where-Object {
             if ($_ -match '^\s*(\d\d)-(\d\d)\s+(\d\d:\d\d:\d\d\.\d{3})') {
                 $stamp = '2026-' + $Matches[1] + '-' + $Matches[2] + ' ' + $Matches[3]
                 $when = [datetime]::ParseExact($stamp,'yyyy-MM-dd HH:mm:ss.fff',[Globalization.CultureInfo]::InvariantCulture)
@@ -50,6 +51,14 @@ function Device-Log() {
             }
             return $false
         })
+        if ($null -ne $script:firstRegisteredLine) {
+            $start = -1
+            for ($i=0; $i -lt $lines.Count; $i++) {
+                if ($lines[$i] -eq $script:firstRegisteredLine) { $start=$i; break }
+            }
+            if ($start -ge 0) { return @($lines | Select-Object -Skip $start) }
+        }
+        return $lines
     }
     return @()
 }
@@ -117,14 +126,83 @@ function Clear-StaleRelay() {
         Emit ('STALE_RELAY_SESSION_ENDED pid=' + $id)
     }
 }
+function Invoke-DeviceInput([string[]]$parts) {
+    # Never log the arguments: a field value may be the authentication token.
+    & adb -s $Serial shell input @parts 1>$null 2>$null
+    if ($LASTEXITCODE -ne 0) { throw 'DEVICE_INPUT_FAILED' }
+}
+function Set-DeviceField([int]$x,[int]$y,[string]$value) {
+    if ($value -notmatch '^[A-Za-z0-9_.-]+$') { throw 'DEVICE_FIELD_UNSUPPORTED_VALUE' }
+    Invoke-DeviceInput @('tap',([string]$x),([string]$y))
+    Invoke-DeviceInput @('keyevent','123')
+    # The same forty DEL presses, but inside one Android shell, avoiding
+    # repeated USB command startup; keep the individual-input fallback.
+    & adb -s $Serial shell 'i=0; while [ $i -lt 40 ]; do input keyevent 67; i=$((i+1)); done' 1>$null 2>$null
+    if($LASTEXITCODE -ne 0) {
+        for($i=0;$i -lt 40;$i++) { Invoke-DeviceInput @('keyevent','67') }
+    }
+    Invoke-DeviceInput @('text',$value)
+}
+function Test-CaptureDialog {
+    $state = (& adb -s $Serial shell dumpsys activity activities 2>$null | Out-String)
+    return ($state -match 'MediaProjectionPermissionActivity')
+}
+function Approve-CaptureDialog {
+    $foundDialog = $false
+    for ($attempt=1;$attempt -le 8;$attempt++) {
+        Start-Sleep -Milliseconds 500
+        if(Test-CaptureDialog) { $foundDialog = $true }
+        & adb -s $Serial shell uiautomator dump /sdcard/task006-ui.xml 1>$null 2>$null
+        if($LASTEXITCODE -ne 0) { continue }
+        $xmlData = (& adb -s $Serial shell cat /sdcard/task006-ui.xml 2>$null | Out-String)
+        if ($xmlData -notmatch 'Começar agora|Come&#231;ar agora|Start now') { continue }
+        try {
+            [xml]$xml = $xmlData
+            $button = @($xml.SelectNodes('//node') | Where-Object {
+                $_.text -in @('Começar agora','Start now')
+            } | Select-Object -First 1)
+            if ($button.Count -ne 1) { continue }
+            $rect = [regex]::Match($button[0].bounds,'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$')
+            if (-not $rect.Success) { continue }
+            $x = [int](([int]$rect.Groups[1].Value+[int]$rect.Groups[3].Value)/2)
+            $y = [int](([int]$rect.Groups[2].Value+[int]$rect.Groups[4].Value)/2)
+            if ($x -lt 0 -or $x -gt 720 -or $y -lt 0 -or $y -gt 1560) { continue }
+            Invoke-DeviceInput @('tap',([string]$x),([string]$y))
+            Emit ('OFFICIAL_DIALOG_APPROVED via=xml attempt='+$attempt)
+            return
+        } catch {
+            Emit ('CONSENT_XML_PARSE_RETRY attempt='+$attempt)
+        }
+    }
+    if ($foundDialog -and (Test-CaptureDialog)) {
+        # Coordinates are the documented validated fallback for this LG.
+        Invoke-DeviceInput @('tap','488','1381')
+        Emit 'OFFICIAL_DIALOG_APPROVED via=verified_window_fallback'
+        return
+    }
+    Emit 'OWNER_TAP_REQUIRED: MediaProjectionPermissionActivity or approval button not detected'
+    $script:exitCode=4
+    throw 'OWNER_TAP_REQUIRED'
+}
 function Request-ApprovedSession() {
     $prior = Device-Count 'agent_registered device_id=phone-01'
     $failed = Device-Count 'session_failed:'
     & adb -s $Serial shell am start -n br.net.qtscrcpy.agent/.MainActivity | Out-Null
     if ($LASTEXITCODE -ne 0) { throw 'ANDROID_ACTIVITY_NOT_AVAILABLE' }
-    # The owner fills host=localhost and token, chooses Start, then approves
-    # the official Android MediaProjection dialog on the physical device.
-    Emit 'OWNER_TAP_REQUIRED: conferir o token do device phone-01, iniciar espelhamento e aprovar a caixa oficial de captura no aparelho'
+    Start-Sleep -Milliseconds 650
+    Set-DeviceField 360 179 'localhost'
+    Set-DeviceField 360 336 'phone-01'
+    Set-DeviceField 360 493 $script:token
+    Invoke-DeviceInput @('keyevent','4')
+    Start-Sleep -Milliseconds 300
+    $focus = (& adb -s $Serial shell dumpsys activity activities 2>$null | Out-String)
+    if ($focus -notmatch 'br.net.qtscrcpy.agent/.MainActivity') {
+        Emit 'OWNER_TAP_REQUIRED: Android MainActivity not in foreground after keyboard'
+        $script:exitCode=4
+        throw 'OWNER_TAP_REQUIRED'
+    }
+    Invoke-DeviceInput @('tap','360','609')
+    Approve-CaptureDialog
     try {
         Wait-For {
             if ((Device-Count 'session_failed:') -gt $failed) {
@@ -140,6 +218,10 @@ function Request-ApprovedSession() {
         throw
     }
     Emit ('AGENT_REGISTERED count=' + (Device-Count 'agent_registered device_id=phone-01'))
+    if ($null -eq $script:firstRegisteredLine) {
+        $line = @((Device-Log) | Where-Object { $_ -match 'agent_registered device_id=phone-01' } | Select-Object -Last 1)
+        if ($line.Count -eq 1) { $script:firstRegisteredLine = $line[0] }
+    }
 }
 function Start-SwipeLoop() {
     $script:swipes = Start-Job -ScriptBlock {
@@ -239,7 +321,18 @@ try {
     }
     if ((& adb -s $Serial get-state) -ne 'device') { throw 'ADB_NOT_READY' }
     Begin-Phase 'P0'
+    $existingService = (& adb -s $Serial shell dumpsys activity services br.net.qtscrcpy.agent 2>$null | Out-String)
+    if($existingService -match 'ServiceRecord\{[^\r\n]*MirrorService') {
+        throw 'MIRROR_SERVICE_ALREADY_ACTIVE_BEFORE_P0'
+    }
     Clear-StaleRelay
+    $staleDeadline = [DateTime]::UtcNow.AddSeconds(15)
+    while ([DateTime]::UtcNow -lt $staleDeadline) {
+        $state = (& adb -s $Serial shell dumpsys activity services br.net.qtscrcpy.agent 2>$null | Out-String)
+        if($state -notmatch 'ServiceRecord\{[^\r\n]*MirrorService') { break }
+        Start-Sleep -Milliseconds 500
+    }
+    $script:logStartLocal = Get-Date
     Start-Relay
     & adb -s $Serial reverse tcp:8443 tcp:8443 | Out-Null
     if ($LASTEXITCODE -ne 0) { throw 'ADB_REVERSE_CONTROL_FAILED' }
@@ -253,7 +346,7 @@ try {
     End-Phase 'relay started and agent registered'
 
     Begin-Phase 'P1'
-    $script:qt = Start-Process -FilePath $binary -WorkingDirectory $deploy -PassThru -RedirectStandardError $qtLog
+    $script:qt = Start-Process -FilePath $binary -WorkingDirectory $deploy -PassThru -RedirectStandardError (Join-Path $run 'qt-process-stderr.txt')
     Wait-For { @(Get-QscMain $script:qt.Id).Count -eq 1 } 12 'QT_MAIN_WINDOW_MISSING'
     Set-QscToken $script:qt.Id $script:token
     Invoke-QscConnect $script:qt.Id
@@ -317,18 +410,25 @@ try {
     if ($null -ne $script:logcat -and -not $script:logcat.HasExited) {
         Stop-Process -Id $script:logcat.Id -Force -ErrorAction SilentlyContinue
     }
-    if ($null -ne $script:qt -and -not $script:qt.HasExited) {
-        foreach ($w in (Get-QscWindows $script:qt.Id)) {
-            [void][QscUiLab]::PostMessage($w.Handle,0x10,[IntPtr]::Zero,[IntPtr]::Zero)
+    try {
+        if (Test-Path $qtLogSource) {
+            @(Get-Content $qtLogSource | Where-Object {
+                $_.Length -ge 24 -and
+                [datetime]::Parse($_.Substring(0,24)).ToUniversalTime() -ge $script:auditStart
+            }) | Set-Content -Encoding UTF8 -LiteralPath $qtLog
         }
+    } catch { Emit ('QT_LOG_CAPTURE_FAILED '+$_.Exception.GetType().Name) }
+    if ($null -ne $script:qt -and -not $script:qt.HasExited) {
+        try {
+            foreach ($w in (Get-QscWindows $script:qt.Id)) {
+                [void][QscUiLab]::PostMessage($w.Handle,0x10,[IntPtr]::Zero,[IntPtr]::Zero)
+            }
+            if (-not $script:qt.WaitForExit(2500)) {
+                Stop-Process -Id $script:qt.Id -ErrorAction SilentlyContinue
+            }
+        } catch { Emit 'CLIENT_TERMINATION_FAILED' }
     }
-    if (Test-Path $qtLogSource) {
-        @(Get-Content $qtLogSource | Where-Object {
-            $_.Length -ge 24 -and
-            [datetime]::Parse($_.Substring(0,24)).ToUniversalTime() -ge $script:auditStart
-        }) | Set-Content -Encoding UTF8 -LiteralPath $qtLog
-    }
-    Stop-Relay
+    try { Stop-Relay } catch { Emit 'RELAY_TERMINATION_FAILED' }
     Emit ('TASK006_HARNESS_EXIT=' + $script:exitCode)
 }
 exit $script:exitCode

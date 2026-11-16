@@ -1,0 +1,65 @@
+--------- beginning of main
+--------- beginning of system
+11-16 04:41:59.097 28613 30724 I QscnetAgent: agent_registered device_id=phone-01
+11-16 04:42:01.956 28613 30724 I QscnetAgent: agent_paired width=720 height=1560
+11-16 04:42:02.152 28613 30724 I QscnetAgent: capture_initialized width=720 height=1560 density=280
+11-16 04:42:02.314 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98326731156 nano_us=98326781887 uptime_us=98326781000 elapsed_us=113770167905 rtc_ms=1794814922314
+11-16 04:42:02.936 28613 30742 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 04:42:02.966 28613 30724 W QscnetAgent: stream_retry=1
+11-16 04:42:03.285 28613 30724 I QscnetAgent: stream_repaired sent_frames=18
+11-16 04:42:06.030 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98330475041 nano_us=98330498331 uptime_us=98330498000 elapsed_us=113773884327 rtc_ms=1794814926030
+11-16 04:42:06.033 28613 30724 I QscnetAgent: stream_frames=150 encoder_dropped=0 last_pts_us=98330475041
+11-16 04:42:09.090 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98333501934 nano_us=98333557340 uptime_us=98333557000 elapsed_us=113776943346 rtc_ms=1794814929089
+11-16 04:42:09.094 28613 30724 I QscnetAgent: stream_frames=300 encoder_dropped=0 last_pts_us=98333501934
+11-16 04:42:11.965 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98336369222 nano_us=98336432628 uptime_us=98336432000 elapsed_us=113779818624 rtc_ms=1794814931965
+11-16 04:42:11.967 28613 30724 I QscnetAgent: stream_frames=450 encoder_dropped=0 last_pts_us=98336369222
+11-16 04:42:15.033 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98339407305 nano_us=98339501357 uptime_us=98339501000 elapsed_us=113782887354 rtc_ms=1794814935033
+11-16 04:42:15.035 28613 30724 I QscnetAgent: stream_frames=600 encoder_dropped=0 last_pts_us=98339407305
+11-16 04:42:17.986 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98342432684 nano_us=98342454197 uptime_us=98342454000 elapsed_us=113785840200 rtc_ms=1794814937986
+11-16 04:42:17.990 28613 30724 I QscnetAgent: stream_frames=750 encoder_dropped=0 last_pts_us=98342432684
+11-16 04:42:20.907 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98345284895 nano_us=98345374678 uptime_us=98345374000 elapsed_us=113788760672 rtc_ms=1794814940907
+11-16 04:42:20.909 28613 30724 I QscnetAgent: stream_frames=900 encoder_dropped=0 last_pts_us=98345284895
+11-16 04:42:23.941 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98348326293 nano_us=98348408628 uptime_us=98348408000 elapsed_us=113791794623 rtc_ms=1794814943941
+11-16 04:42:23.944 28613 30724 I QscnetAgent: stream_frames=1050 encoder_dropped=0 last_pts_us=98348326293
+11-16 04:42:26.801 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98351196063 nano_us=98351269347 uptime_us=98351269000 elapsed_us=113794655341 rtc_ms=1794814946801
+11-16 04:42:26.804 28613 30724 I QscnetAgent: stream_frames=1200 encoder_dropped=0 last_pts_us=98351196063
+11-16 04:42:29.905 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98354234358 nano_us=98354372982 uptime_us=98354372000 elapsed_us=113797758975 rtc_ms=1794814949905
+11-16 04:42:29.908 28613 30724 I QscnetAgent: stream_frames=1350 encoder_dropped=0 last_pts_us=98354234358
+11-16 04:42:32.868 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98357276667 nano_us=98357335385 uptime_us=98357335000 elapsed_us=113800721385 rtc_ms=1794814952867
+11-16 04:42:32.871 28613 30724 I QscnetAgent: stream_frames=1500 encoder_dropped=0 last_pts_us=98357276667
+11-16 04:42:35.729 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98360111544 nano_us=98360196788 uptime_us=98360196000 elapsed_us=113803582784 rtc_ms=1794814955729
+11-16 04:42:35.732 28613 30724 I QscnetAgent: stream_frames=1650 encoder_dropped=0 last_pts_us=98360111544
+11-16 04:42:38.826 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98363166338 nano_us=98363293680 uptime_us=98363293000 elapsed_us=113806679673 rtc_ms=1794814958826
+11-16 04:42:38.828 28613 30724 I QscnetAgent: stream_frames=1800 encoder_dropped=0 last_pts_us=98363166338
+11-16 04:42:41.763 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98366208809 nano_us=98366230495 uptime_us=98366230000 elapsed_us=113809616491 rtc_ms=1794814961763
+11-16 04:42:41.766 28613 30724 I QscnetAgent: stream_frames=1950 encoder_dropped=0 last_pts_us=98366208809
+11-16 04:42:44.749 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98369077947 nano_us=98369217223 uptime_us=98369217000 elapsed_us=113812603217 rtc_ms=1794814964749
+11-16 04:42:44.751 28613 30724 I QscnetAgent: stream_frames=2100 encoder_dropped=0 last_pts_us=98369077947
+11-16 04:42:47.869 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98372249375 nano_us=98372337273 uptime_us=98372337000 elapsed_us=113815723270 rtc_ms=1794814967869
+11-16 04:42:47.872 28613 30724 I QscnetAgent: stream_frames=2250 encoder_dropped=0 last_pts_us=98372249375
+11-16 04:42:50.770 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98375121631 nano_us=98375237493 uptime_us=98375237000 elapsed_us=113818623485 rtc_ms=1794814970770
+11-16 04:42:50.772 28613 30724 I QscnetAgent: stream_frames=2400 encoder_dropped=0 last_pts_us=98375121631
+11-16 04:42:54.029 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98378377366 nano_us=98378497097 uptime_us=98378497000 elapsed_us=113821883092 rtc_ms=1794814974029
+11-16 04:42:54.033 28613 30724 I QscnetAgent: stream_frames=2550 encoder_dropped=0 last_pts_us=98378377366
+11-16 04:42:57.166 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98381553463 nano_us=98381633891 uptime_us=98381633000 elapsed_us=113825019888 rtc_ms=1794814977166
+11-16 04:42:57.174 28613 30724 I QscnetAgent: stream_frames=2700 encoder_dropped=0 last_pts_us=98381553463
+11-16 04:43:00.172 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98384538673 nano_us=98384639848 uptime_us=98384639000 elapsed_us=113828025840 rtc_ms=1794814980172
+11-16 04:43:00.176 28613 30724 I QscnetAgent: stream_frames=2850 encoder_dropped=0 last_pts_us=98384538673
+11-16 04:43:03.261 28613 30732 I QscnetAgent: pts_clock_sample pts_us=98387610130 nano_us=98387728573 uptime_us=98387728000 elapsed_us=113831114566 rtc_ms=1794814983261
+11-16 04:43:03.263 28613 30724 I QscnetAgent: stream_frames=3000 encoder_dropped=0 last_pts_us=98387610130
+11-16 04:43:04.342 28613 30748 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 04:43:04.353 28613 30724 W QscnetAgent: stream_retry=1
+11-16 04:43:04.665 28613 30724 I QscnetAgent: stream_repaired sent_frames=3055
+11-16 04:43:10.296 28613 31525 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 04:43:10.301 28613 30724 W QscnetAgent: stream_retry=1
+11-16 04:43:12.332 28613 31538 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 04:43:12.433 28613 30724 E QscnetAgent: session_failed: IOException: Conexão perdida após a segunda tentativa: Conexão TCP encerrada
+11-16 04:43:12.518 28613 30724 I QscnetAgent: capture_stopped frames=3091 dropped=0
+11-16 04:43:12.534 28613 30724 I QscnetAgent: service_stopped sent_frames=3089
+11-16 04:45:19.079 28613  1929 I QscnetAgent: agent_registered device_id=phone-01
+11-16 04:45:19.701 28613  1929 I QscnetAgent: agent_paired width=720 height=1560
+11-16 04:45:19.822 28613  1929 I QscnetAgent: capture_initialized width=720 height=1560 density=280
+11-16 04:45:19.985 28613  1933 I QscnetAgent: pts_clock_sample pts_us=98524417368 nano_us=98524452955 uptime_us=98524452000 elapsed_us=113967838957 rtc_ms=1794815119985
+11-16 04:45:30.290 28613  1941 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 04:45:30.322 28613  1929 W QscnetAgent: stream_retry=1
+11-16 04:45:30.651 28613  1929 I QscnetAgent: stream_repaired sent_frames=51

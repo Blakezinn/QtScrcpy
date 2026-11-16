@@ -1,0 +1,8 @@
+--------- beginning of main
+--------- beginning of system
+11-16 04:28:40.952 11587 25124 I QscnetAgent: agent_registered device_id=phone-01
+11-16 04:28:44.549 11587 25124 I QscnetAgent: agent_paired width=720 height=1560
+11-16 04:28:44.850 11587 25124 I QscnetAgent: capture_initialized width=720 height=1560 density=280
+11-16 04:28:45.051 11587 25132 I QscnetAgent: pts_clock_sample pts_us=97529462686 nano_us=97529519311 uptime_us=97529519000 elapsed_us=112972905309 rtc_ms=1794814125051
+11-16 04:28:45.919 11587 25139 W QscnetAgent: control_closed: Conexão de controle encerrada
+11-16 04:28:45.945 11587 25124 W QscnetAgent: stream_retry=1
