@@ -26,8 +26,10 @@ class QLineEdit;
 class QCheckBox;
 class QGroupBox;
 class QNetworkAccessManager;
+class QNetworkRequest;
 class QPushButton;
 class QSpinBox;
+class QLabel;
 class Dialog : public QWidget
 {
     Q_OBJECT
@@ -113,6 +115,9 @@ private:
     void showPortEditMenu(const QPoint &pos);
     void syncPresetLevelToUi();
     void refreshDeviceList();
+    void fetchFixedCode();
+    void saveRelaySettings();
+    bool prepareRelayRequest(const QString &endpoint, QNetworkRequest &request);
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -128,6 +133,8 @@ private:
     QSpinBox *m_relayDataPortSpin = nullptr;
     QLineEdit *m_relayDeviceIdEdit = nullptr;
     QLineEdit *m_relayTokenEdit = nullptr;
+    QLabel *m_relayFixedCodeLabel = nullptr;
+    quint64 m_relayDevicesGeneration = 0;
     QGroupBox *m_devicesGroup = nullptr;
     QListWidget *m_devicesList = nullptr;
     QPushButton *m_devicesRefreshBtn = nullptr;

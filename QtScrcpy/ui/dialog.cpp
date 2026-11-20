@@ -16,7 +16,10 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QKeyEvent>
+#include <QLabel>
 #include <QComboBox>
+#include <QBrush>
+#include <QColor>
 #include <QLineEdit>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -24,6 +27,7 @@
 #include <QPushButton>
 #include <QRandomGenerator>
 #include <QRegularExpression>
+#include <QSettings>
 #include <QSizePolicy>
 #include <QScreen>
 #include <QScrollArea>
@@ -322,6 +326,17 @@ void Dialog::initUI()
     startConfigLayout->setContentsMargins(0, 0, 0, 0);
     advancedDisplayLayout->setContentsMargins(0, 0, 0, 0);
 
+    // --- Limpeza: ocultar tudo que depende de ADB ---
+    ui->useSingleModeCheck->setVisible(false);
+    ui->simpleGroupBox->setVisible(false);
+    ui->adbGroupBox->setVisible(false);
+    ui->outEdit->setVisible(false);
+    ui->usbGroupBox->setVisible(false);
+    ui->wirelessGroupBox->setVisible(false);
+    ui->videoSourceWidget->setVisible(false);
+    ui->configWidget4->setVisible(false); // game scripts (ADB)
+
+    // Remover dos layouts originais (para não ocuparem espaço)
     ui->verticalLayout_5->removeWidget(ui->adbGroupBox);
     ui->verticalLayout_5->removeWidget(ui->outEdit);
     ui->verticalLayout_6->removeWidget(ui->configGroupBox);
@@ -330,9 +345,8 @@ void Dialog::initUI()
     ui->verticalLayout_6->removeWidget(m_advancedDisplayGroup);
     delete ui->verticalLayout_6->takeAt(0);
 
-    ui->verticalLayout_5->addWidget(ui->usbGroupBox);
-    ui->verticalLayout_5->addWidget(ui->wirelessGroupBox);
-    m_relayGroup = new QGroupBox(tr("Conectar remoto"), ui->leftWidget);
+    // Layout limpo: esquerda = relay, direita = config
+    m_relayGroup = new QGroupBox(tr("Conectar"), ui->leftWidget);
     auto *relayLayout = new QFormLayout(m_relayGroup);
     relayLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
     relayLayout->setContentsMargins(8, 10, 8, 8);
@@ -347,13 +361,41 @@ void Dialog::initUI()
     m_relayDataPortSpin->setRange(1, 65535);
     m_relayDataPortSpin->setValue(9000);
     relayLayout->addRow(tr("Porta de dados"), m_relayDataPortSpin);
-    m_relayDeviceIdEdit = new QLineEdit(QStringLiteral("phone-01"), m_relayGroup);
+    m_relayDeviceIdEdit = new QLineEdit(m_relayGroup);
+    m_relayDeviceIdEdit->setReadOnly(true);
+    m_relayDeviceIdEdit->setPlaceholderText(tr("Selecione um dispositivo vinculado"));
     relayLayout->addRow(tr("Device ID"), m_relayDeviceIdEdit);
     m_relayTokenEdit = new QLineEdit(m_relayGroup);
     m_relayTokenEdit->setObjectName(QStringLiteral("relayTokenEdit"));
     m_relayTokenEdit->setEchoMode(QLineEdit::Password);
-    m_relayTokenEdit->setPlaceholderText(tr("Token de autenticação"));
-    relayLayout->addRow(tr("Token"), m_relayTokenEdit);
+    m_relayTokenEdit->setPlaceholderText(tr("Token privado do controlador"));
+    relayLayout->addRow(tr("Token do controlador"), m_relayTokenEdit);
+    QSettings relaySettings;
+    m_relayHostEdit->setText(relaySettings.value(QStringLiteral("relay/v2/host"),
+                                                 QStringLiteral("localhost")).toString());
+    m_relayCtlPortSpin->setValue(relaySettings.value(QStringLiteral("relay/v2/control_port"),
+                                                     8443).toInt());
+    m_relayDataPortSpin->setValue(relaySettings.value(QStringLiteral("relay/v2/data_port"),
+                                                      9000).toInt());
+    m_relayTokenEdit->setText(relaySettings.value(QStringLiteral("relay/v2/controller_token")).toString());
+    connect(m_relayHostEdit, &QLineEdit::editingFinished, this, &Dialog::saveRelaySettings);
+    connect(m_relayTokenEdit, &QLineEdit::editingFinished, this, &Dialog::saveRelaySettings);
+    connect(m_relayCtlPortSpin, QOverload<int>::of(&QSpinBox::valueChanged),
+            this, &Dialog::saveRelaySettings);
+    connect(m_relayDataPortSpin, QOverload<int>::of(&QSpinBox::valueChanged),
+            this, &Dialog::saveRelaySettings);
+    m_relayFixedCodeLabel = new QLabel(tr("Código: ..."), m_relayGroup);
+    m_relayFixedCodeLabel->setObjectName(QStringLiteral("relayFixedCodeLabel"));
+    {
+        QFont f = m_relayFixedCodeLabel->font();
+        f.setPointSize(20);
+        f.setBold(true);
+        m_relayFixedCodeLabel->setFont(f);
+    }
+    m_relayFixedCodeLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    m_relayFixedCodeLabel->setAlignment(Qt::AlignCenter);
+    m_relayFixedCodeLabel->setStyleSheet(QStringLiteral("QLabel { color: #0066cc; background: #eef2f7; border-radius: 4px; padding: 8px; }"));
+    relayLayout->addRow(m_relayFixedCodeLabel);
     auto *relayStart = new QPushButton(tr("Conectar remoto"), m_relayGroup);
     relayStart->setObjectName(QStringLiteral("relayConnectButton"));
     relayLayout->addRow(relayStart);
@@ -377,10 +419,21 @@ void Dialog::initUI()
             m_relayDeviceIdEdit->setText(item->data(Qt::UserRole).toString());
         }
     });
+    connect(m_devicesList, &QListWidget::itemClicked, this,
+            [this](QListWidgetItem *item) {
+        if (item) m_relayDeviceIdEdit->setText(item->data(Qt::UserRole).toString());
+    });
+    const auto invalidateDevices = [this]() {
+        ++m_relayDevicesGeneration;
+        m_devicesList->clear();
+        m_relayDeviceIdEdit->clear();
+    };
+    connect(m_relayHostEdit, &QLineEdit::textChanged, this, invalidateDevices);
+    connect(m_relayTokenEdit, &QLineEdit::textChanged, this, invalidateDevices);
+    connect(m_relayCtlPortSpin, QOverload<int>::of(&QSpinBox::valueChanged),
+            this, invalidateDevices);
     ui->verticalLayout_5->addWidget(m_relayGroup);
     startConfigLayout->addWidget(ui->configGroupBox);
-    startConfigLayout->addWidget(ui->adbGroupBox);
-    startConfigLayout->addWidget(ui->outEdit, 1);
     advancedDisplayLayout->addWidget(m_advancedDisplayGroup);
     advancedDisplayLayout->addStretch();
     initAdvancedConfigUi(advancedConfigPage);
@@ -414,59 +467,135 @@ void Dialog::initUI()
     ui->verticalLayout_5->setStretch(3, 0);
     ui->verticalLayout_4->setStretch(2, 1);
     ui->verticalLayout_6->setStretch(0, 1);
+
+    // Auto-fetch fixed code on startup
+    QTimer::singleShot(500, this, &Dialog::fetchFixedCode);
 }
 
-void Dialog::refreshDeviceList()
+void Dialog::saveRelaySettings()
+{
+    QSettings settings;
+    settings.setValue(QStringLiteral("relay/v2/host"), m_relayHostEdit->text().trimmed());
+    settings.setValue(QStringLiteral("relay/v2/control_port"), m_relayCtlPortSpin->value());
+    settings.setValue(QStringLiteral("relay/v2/data_port"), m_relayDataPortSpin->value());
+    settings.setValue(QStringLiteral("relay/v2/controller_token"), m_relayTokenEdit->text().trimmed());
+    QTimer::singleShot(300, this, &Dialog::fetchFixedCode);
+}
+
+bool Dialog::prepareRelayRequest(const QString &endpoint, QNetworkRequest &request)
 {
     const QString host = m_relayHostEdit->text().trimmed();
-    const QString token = m_relayTokenEdit->text().trimmed();
-    if (host.isEmpty() || token.isEmpty()) {
-        outLog(tr("Configure host e token antes de listar dispositivos."));
-        return;
+    if (host.isEmpty() || !QSslSocket::supportsSsl()) {
+        outLog(tr("O relay v2 exige host válido e suporte a TLS."));
+        return false;
     }
-    const QString certPath = qEnvironmentVariable("QSC_RELAY_CERT").trimmed();
-    const bool tlsEnabled = !certPath.isEmpty();
     QUrl url;
-    url.setScheme(tlsEnabled ? QStringLiteral("https") : QStringLiteral("http"));
+    url.setScheme(QStringLiteral("https"));
     url.setHost(host);
     url.setPort(m_relayCtlPortSpin->value());
-    url.setPath(QStringLiteral("/v1/devices"));
-    QNetworkRequest request(url);
-    request.setRawHeader("Authorization", QByteArrayLiteral("Bearer ") + token.toUtf8());
-    if (tlsEnabled) {
+    url.setPath(endpoint);
+    if (!url.isValid() || url.host().isEmpty()) {
+        outLog(tr("Host do relay inválido."));
+        return false;
+    }
+    request = QNetworkRequest(url);
+    // Bearer credentials must never be forwarded to a redirected origin.
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::ManualRedirectPolicy);
+    request.setRawHeader("Authorization", QByteArrayLiteral("Bearer ")
+                         + m_relayTokenEdit->text().trimmed().toUtf8());
+    QSslConfiguration config = QSslConfiguration::defaultConfiguration();
+    const QString certPath = qEnvironmentVariable("QSC_RELAY_CERT").trimmed();
+    if (!certPath.isEmpty()) {
         QFile certFile(certPath);
-        if (!certFile.open(QIODevice::ReadOnly) || !QSslSocket::supportsSsl()) {
+        if (!certFile.open(QIODevice::ReadOnly)) {
             outLog(tr("Certificado TLS indisponível."));
-            return;
+            return false;
         }
         const QList<QSslCertificate> certificates =
                 QSslCertificate::fromData(certFile.readAll(), QSsl::Pem);
         if (certificates.isEmpty()) {
             outLog(tr("Certificado TLS inválido."));
-            return;
+            return false;
         }
-        QSslConfiguration config = QSslConfiguration::defaultConfiguration();
         config.setCaCertificates(certificates);
-        config.setPeerVerifyMode(QSslSocket::VerifyPeer);
-        config.setProtocol(QSsl::TlsV1_2OrLater);
-        request.setSslConfiguration(config);
     }
-    m_devicesRefreshBtn->setEnabled(false);
-    QNetworkReply *reply = m_devicesNam->get(request);
+    config.setPeerVerifyMode(QSslSocket::VerifyPeer);
+    config.setProtocol(QSsl::TlsV1_2OrLater);
+    request.setSslConfiguration(config);
+    return true;
+}
+
+void Dialog::fetchFixedCode()
+{
+    if (m_relayTokenEdit->text().trimmed().isEmpty()) {
+        m_relayFixedCodeLabel->setText(tr("Configure o token"));
+        return;
+    }
+    QNetworkRequest request;
+    if (!prepareRelayRequest(QStringLiteral("/v2/fixed-code"), request)) return;
+    m_relayFixedCodeLabel->setText(tr("Solicitando..."));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+    QNetworkReply *reply = m_devicesNam->post(request, QByteArrayLiteral("{}"));
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
-        m_devicesRefreshBtn->setEnabled(true);
-        if (reply->error() != QNetworkReply::NoError) {
-            outLog(tr("Falha ao listar dispositivos: %1").arg(reply->errorString()));
+        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        const QByteArray body = reply->readAll();
+        if (reply->error() != QNetworkReply::NoError || status < 200 || status >= 300) {
+            m_relayFixedCodeLabel->setText(tr("Falha ao obter código"));
+            outLog(tr("Código fixo indisponível (HTTP %1): %2")
+                   .arg(status).arg(reply->errorString()));
             return;
         }
+        QJsonParseError parseError;
+        const QJsonDocument response = QJsonDocument::fromJson(body, &parseError);
+        const QJsonObject result = response.object();
+        const QString code = result.value(QStringLiteral("code")).toString();
+        static const QRegularExpression kFixedCode(QStringLiteral("^[A-Z0-9]{4,6}$"));
+        if (parseError.error != QJsonParseError::NoError || !response.isObject()
+                || !kFixedCode.match(code).hasMatch()) {
+            m_relayFixedCodeLabel->setText(tr("Resposta inválida"));
+            return;
+        }
+        m_relayFixedCodeLabel->setText(code);
+    });
+}
+
+void Dialog::refreshDeviceList()
+{
+    const QString host = m_relayHostEdit->text().trimmed();
+    if (host.isEmpty() || m_relayTokenEdit->text().trimmed().isEmpty()) {
+        outLog(tr("Configure host e token antes de listar dispositivos."));
+        return;
+    }
+    QNetworkRequest request;
+    if (!prepareRelayRequest(QStringLiteral("/v1/devices"), request)) return;
+    saveRelaySettings();
+    ++m_relayDevicesGeneration;
+    const quint64 generation = m_relayDevicesGeneration;
+    m_devicesList->clear();
+    m_relayDeviceIdEdit->clear();
+    m_devicesRefreshBtn->setEnabled(false);
+    QNetworkReply *reply = m_devicesNam->get(request);
+    connect(reply, &QNetworkReply::finished, this, [this, reply, generation]() {
+        reply->deleteLater();
+        m_devicesRefreshBtn->setEnabled(true);
+        if (generation != m_relayDevicesGeneration) return;
+        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (reply->error() != QNetworkReply::NoError || status != 200) {
+            outLog(tr("Falha ao listar dispositivos (HTTP %1): %2")
+                   .arg(status).arg(reply->errorString()));
+            return;
+        }
+        const QByteArray body = reply->readAll();
         QJsonParseError error;
-        const QJsonDocument document = QJsonDocument::fromJson(reply->readAll(), &error);
+        const QJsonDocument document = QJsonDocument::fromJson(body, &error);
         if (error.error != QJsonParseError::NoError || !document.isArray()) {
             outLog(tr("Resposta inválida do relay."));
             return;
         }
         m_devicesList->clear();
+        outLog(QStringLiteral("relay_devices_body=") + QString::fromUtf8(body));
         const QJsonArray devices = document.array();
         for (const QJsonValue &value : devices) {
             if (!value.isObject()) continue;
@@ -474,9 +603,37 @@ void Dialog::refreshDeviceList()
             const QString deviceId = entry.value(QStringLiteral("device_id")).toString();
             const QString status = entry.value(QStringLiteral("status")).toString();
             if (deviceId.isEmpty()) continue;
-            auto *item = new QListWidgetItem(deviceId + QStringLiteral(" — ") + status,
-                                             m_devicesList);
+
+            QString label = deviceId;
+            QString details;
+            const QString model = entry.value(QStringLiteral("model")).toString();
+            if (!model.isEmpty()) label += QStringLiteral(" (%1)").arg(model);
+
+            const int battery = entry.value(QStringLiteral("battery")).toInt(-1);
+            const bool charging = entry.value(QStringLiteral("charging")).toBool(false);
+            const QString network = entry.value(QStringLiteral("network")).toString();
+            const bool screenOn = entry.value(QStringLiteral("screen_on")).toBool(false);
+
+            if (status == QLatin1String("online") || status == QLatin1String("connected")
+                    || status == QLatin1String("waiting")) {
+                label += QStringLiteral("  \u25CF");
+                if (battery >= 0)
+                    details += tr("Bateria %1%2").arg(battery)
+                        .arg(charging ? QStringLiteral(" \u26A1") : QString());
+                if (!network.isEmpty() && network != QLatin1String("none"))
+                    details += (details.isEmpty() ? QString() : QStringLiteral(" | "))
+                        + network.toUpper();
+                details += (details.isEmpty() ? QString() : QStringLiteral(" | "))
+                    + (screenOn ? tr("tela ON") : tr("tela OFF"));
+            } else {
+                label += QStringLiteral("  \u25CB");
+            }
+
+            auto *item = new QListWidgetItem(label, m_devicesList);
             item->setData(Qt::UserRole, deviceId);
+            if (!details.isEmpty()) item->setToolTip(details);
+            if (status != QLatin1String("offline"))
+                item->setForeground(QBrush(QColor(46, 139, 87)));
         }
         m_devicesList->sortItems();
         qInfo() << "devices_list_loaded count=" << m_devicesList->count();
@@ -1350,11 +1507,9 @@ void Dialog::outLog(const QString &log, bool newLine)
     // avoid sub thread update ui
     QString backLog = log;
     // The Windows GUI process does not reliably forward Qt's default
-    // message handler to redirected stderr. Persist only neutral remote
-    // lifecycle events so a session test can verify the same text as outEdit.
-    if (backLog.startsWith(QStringLiteral("Remote device "))
-            || backLog.startsWith(QStringLiteral("Remote connection "))
-            || backLog.startsWith(QStringLiteral("Remote stream "))) {
+    // message handler to redirected stderr. Persist every visible log line
+    // so a session can verify the exact same text as outEdit.
+    if (true) {
         QFile file(QCoreApplication::applicationDirPath() + QStringLiteral("/startup.stderr.log"));
         if (file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
             const QByteArray line = (QDateTime::currentDateTimeUtc().toString(
