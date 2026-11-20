@@ -1,0 +1,38 @@
+TASK-016 — Painel QtScrcpy completo conforme referência visual
+Data local: 2026-11-20
+Branch de entrega: task/TASK-016; base net-agent 0e01fd9; somente UI dialog.cpp e dialog.h editados.
+Escopo ampliado pelo solicitante nesta conversa: refazer TODO o painel no padrão da captura, não apenas o bloco Dispositivos.
+Referência aberta e examinada: C:\Users\Max\Pictures\Screenshots\Captura de tela 2026-11-20 181230.png.
+Implementação: cabeçalho navy e indicador de conexão; menu lateral Dispositivos / Estado do celular / Espelho de tela / Câmera / Microfone / Arquivos / Ações remotas / Configurações; conteúdo central temático; barra inferior Atividade do painel; seleção de dispositivo e cartões de presença com bateria, carga, rede, tela e último visto.
+Estado do celular apresenta informações reais do relay após seleção. Espelho de tela reutiliza conexão remota existente e mantém autorização Android. Recursos sem API pronta (Câmera, Microfone, Arquivos, Ações remotas) aparecem identificados como não disponíveis, sem adicionar funcionalidade não aprovada.
+Diagnóstico: a base antes dos ajustes já consultava GET /v1/devices com sucesso (HTTPS+JSON válido, 1 item), porém detalhes ficavam só no tooltip e a área era pequena; UI foi redesenhada, mantendo URL/TLS/credencial da configuração existente.
+Diagnóstico adicional de build: primeiro executável com nova classe apresentou c0000005 devido à reutilização de main.cpp.obj antigo (compilado com layout anterior da classe Dialog). Forçada recompilação de main.cpp.obj e mocs_compilation.cpp.obj (artefatos de build apenas), seguida de build e runtime normais.
+
+ACEITE 1 — BUILD /WX: OK
+Comando: cmd /c C:\Users\Max\AppData\Local\Temp\opencode\build-qt.bat
+Exit code: 0; 3/3 Linking CXX executable ...\output\x64\RelWithDebInfo\QtScrcpy.exe
+Build log local (TEMP): C:\Users\Max\AppData\Local\Temp\TASK-016-release-build-final2.log
+Executável: F:\Documents\Craft Anything\QtScrcpy-portMonito\repos\QtScrcpy\output\x64\RelWithDebInfo\QtScrcpy.exe
+
+ACEITE 2 — PAINEL RENDERIZADO E DISPOSITIVO REAL: OK
+Abertura real do QtScrcpy.exe: janela ativa Painel de dispositivos — Android | QtScrcpy; interface com sidebar, cards, cabeçalho e atividade.
+Resposta real do relay: model=22101316G battery=13 charging=False network=wifi screen_on=True status=waiting.
+UIAutomation detectou cartão 22101316G e confirmou seleção e transição para Estado do celular com BATERIA 13%, REDE Wi-Fi, TELA Ligada e último visto.
+Botão Atualizar mantém GET /v1/devices e retorna status no log; chamada com clique havia sido comprovada antes da reformulação e atualização automática no novo painel trouxe o dispositivo.
+Clique ou duplo clique no cartão preenche o campo Device ID. Token em QLineEdit Password; nenhum token gravado em logs ou relatório.
+
+ACEITE 3 — LOG DO JSON REAL: OK
+Log: F:\Documents\Craft Anything\QtScrcpy-portMonito\repos\QtScrcpy\output\x64\RelWithDebInfo\startup.stderr.log
+Registro relay_devices_body= presente, JSON array válido, quantidade de dispositivos: 1.
+Não reproduzido o conteúdo integral do JSON para preservar identificadores e credenciais.
+
+ACEITE 4 — SCREENSHOTS REAIS: OK
+Capturas PNG via PrintWindow da janela executável (sem sobreposição de janelas de outras aplicações):
+Dispositivos: F:\Documents\Craft Anything\QtScrcpy-portMonito\tasks\out\TASK-016-painel-dispositivos.png
+Estado do celular com dados: F:\Documents\Craft Anything\QtScrcpy-portMonito\tasks\out\TASK-016-painel-estado.png
+
+SEGURANÇA / INTEGRIDADE
+Sem dependências novas; MSVC /WX passou. QNetworkRequest permanece HTTPS com TLS/CA e redirect manual; nenhuma credencial foi imprimida nos diffs ou na saída de testes.
+Não foram alterados os arquivos do Core, relay ou agente. Submódulo QtScrcpyCore já aparecia com modificação antes desta tarefa e foi preservado.
+Sem push ou merge; revisão/merge compete ao coordenador.
+Report espelhado no diretório tasks/out do repositório cliente, para comitar junto com o código; cópia canônica mantida no workspace meta: F:\Documents\Craft Anything\QtScrcpy-portMonito\tasks\out\TASK-016.report

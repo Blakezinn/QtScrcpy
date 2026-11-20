@@ -1,4 +1,4 @@
-﻿#include <QDebug>
+#include <QDebug>
 #include <QAbstractItemView>
 #include <QDesktopServices>
 #include <QDateTime>
@@ -24,6 +24,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QPainter>
 #include <QPushButton>
 #include <QRandomGenerator>
 #include <QRegularExpression>
@@ -32,6 +33,7 @@
 #include <QScreen>
 #include <QScrollArea>
 #include <QSet>
+#include <QStackedWidget>
 #include <QStandardPaths>
 #include <QStyledItemDelegate>
 #include <QSpinBox>
@@ -70,6 +72,146 @@ public:
         return hint;
     }
 };
+
+enum DeviceItemRole {
+    DeviceModelRole = Qt::UserRole + 1,
+    DeviceOnlineRole,
+    DeviceBatteryRole,
+    DeviceChargingRole,
+    DeviceNetworkRole,
+    DeviceScreenRole,
+    DeviceSeenRole
+};
+
+class DevicePresenceDelegate final : public QStyledItemDelegate
+{
+public:
+    explicit DevicePresenceDelegate(QObject *parent = nullptr) : QStyledItemDelegate(parent) {}
+
+    QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &) const override
+    {
+        return QSize(option.rect.width(), 132);
+    }
+
+    void paint(QPainter *painter, const QStyleOptionViewItem &option,
+               const QModelIndex &index) const override
+    {
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing, true);
+        const QRect card = option.rect.adjusted(4, 4, -4, -4);
+        const bool selected = (option.state & QStyle::State_Selected) != 0;
+        painter->setPen(QPen(selected ? QColor(QStringLiteral("#4687cf"))
+                                  : QColor(QStringLiteral("#324257")), 1));
+        painter->setBrush(selected ? QColor(QStringLiteral("#243a55"))
+                                   : QColor(QStringLiteral("#1b2738")));
+        painter->drawRoundedRect(card, 11, 11);
+
+        if (index.data(Qt::UserRole).toString().isEmpty()) {
+            painter->setPen(QColor(QStringLiteral("#a0b2ca")));
+            painter->drawText(card, Qt::AlignCenter,
+                              QStringLiteral("Nenhum dispositivo disponível"));
+            painter->restore();
+            return;
+        }
+
+        const bool online = index.data(DeviceOnlineRole).toBool();
+        const QColor presenceColor(online ? QStringLiteral("#35d09a")
+                                          : QStringLiteral("#f16c78"));
+        const int left = card.left() + 14;
+        const int right = card.right() - 14;
+        const int availableWidth = qMax(0, right - left);
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(presenceColor);
+        painter->drawEllipse(QRect(left, card.top() + 16, 9, 9));
+
+        QFont heading = option.font;
+        heading.setBold(true);
+        heading.setPointSize(10);
+        painter->setFont(heading);
+        painter->setPen(QColor(QStringLiteral("#f0f4fa")));
+        const QString model = index.data(DeviceModelRole).toString();
+        const QString shownModel = model.isEmpty() ? QStringLiteral("Android") : model;
+        const int headingWidth = qMax(25, availableWidth - 122);
+        painter->drawText(QRect(left + 19, card.top() + 8, headingWidth, 25),
+                          Qt::AlignVCenter | Qt::AlignLeft,
+                          QFontMetrics(heading).elidedText(shownModel, Qt::ElideRight, headingWidth));
+
+        QFont small = option.font;
+        small.setPointSize(8);
+        small.setBold(true);
+        painter->setFont(small);
+        painter->setPen(presenceColor);
+        painter->drawText(QRect(right - 94, card.top() + 8, 94, 25),
+                          Qt::AlignVCenter | Qt::AlignRight,
+                          online ? QStringLiteral("ONLINE") : QStringLiteral("OFFLINE"));
+
+        small.setBold(false);
+        painter->setFont(small);
+        painter->setPen(QColor(QStringLiteral("#9baec6")));
+        const QString deviceId = index.data(Qt::UserRole).toString();
+        const QString shortId = deviceId.left(8) + (deviceId.size() > 8
+                                                    ? QStringLiteral("…") : QString());
+        painter->drawText(QRect(left + 19, card.top() + 34, availableWidth - 19, 18),
+                          Qt::AlignVCenter | Qt::AlignLeft,
+                          QStringLiteral("ID  ") + shortId);
+
+        painter->setPen(QColor(QStringLiteral("#35465e")));
+        const int separatorY = card.top() + 59;
+        painter->drawLine(left, separatorY, right, separatorY);
+
+        QFont detail = option.font;
+        detail.setPointSize(9);
+        painter->setFont(detail);
+        painter->setPen(QColor(QStringLiteral("#d9e3f1")));
+        const int columnWidth = qMax(30, availableWidth / 2);
+        const int secondColumn = left + columnWidth;
+        const int y1 = card.top() + 66;
+        const int y2 = card.top() + 91;
+        const int battery = index.data(DeviceBatteryRole).toInt();
+        const bool charging = index.data(DeviceChargingRole).toBool();
+        const QString batteryText = battery >= 0
+                ? QStringLiteral("%1%  ·  %2").arg(battery).arg(charging
+                    ? QStringLiteral("Carregando") : QStringLiteral("Bateria"))
+                : QStringLiteral("Bateria  --");
+        const QString network = index.data(DeviceNetworkRole).toString();
+        QString networkText;
+        if (network == QLatin1String("wifi")) networkText = QStringLiteral("Wi-Fi");
+        else if (network == QLatin1String("cellular")) networkText = QStringLiteral("Rede móvel");
+        else if (network == QLatin1String("ethernet")) networkText = QStringLiteral("Ethernet");
+        else if (network == QLatin1String("none")) networkText = QStringLiteral("Sem rede");
+        else networkText = QStringLiteral("Rede  --");
+        const QVariant screen = index.data(DeviceScreenRole);
+        const QString screenText = !screen.isValid()
+                ? QStringLiteral("Tela  --")
+                : (screen.toBool() ? QStringLiteral("Tela ligada") : QStringLiteral("Tela desligada"));
+        const QString seenText = index.data(DeviceSeenRole).toString();
+
+        const auto drawDetail = [&](const QString &value, int x, int y, int width) {
+            const int innerWidth = qMax(12, width - 8);
+            painter->drawText(QRect(x, y, innerWidth, 20),
+                              Qt::AlignVCenter | Qt::AlignLeft,
+                              QFontMetrics(detail).elidedText(value, Qt::ElideRight, innerWidth));
+        };
+        drawDetail(batteryText, left, y1, columnWidth);
+        drawDetail(networkText, secondColumn, y1, columnWidth);
+        drawDetail(screenText, left, y2, columnWidth);
+        drawDetail(seenText.isEmpty() ? QStringLiteral("Último visto: --") : seenText,
+                   secondColumn, y2, columnWidth);
+        painter->restore();
+    }
+};
+
+QString lastSeenSummary(const QString &value)
+{
+    const QDateTime seen = QDateTime::fromString(value, Qt::ISODate);
+    if (!seen.isValid()) return QStringLiteral("Último visto: --");
+    const qint64 seconds = seen.secsTo(QDateTime::currentDateTimeUtc());
+    if (seconds < 0) return QStringLiteral("Último visto: agora");
+    if (seconds < 60) return QStringLiteral("Visto agora");
+    if (seconds < 3600) return QStringLiteral("Visto há %1 min").arg(seconds / 60);
+    if (seconds < 86400) return QStringLiteral("Visto há %1 h").arg(seconds / 3600);
+    return QStringLiteral("Visto %1").arg(seen.toLocalTime().toString(QStringLiteral("dd/MM HH:mm")));
+}
 } // namespace
 
 const QString &getKeyMapPath()
@@ -117,10 +259,13 @@ void initializeKeyMapDirectory()
 Dialog::Dialog(QWidget *parent) : QWidget(parent), ui(new Ui::Widget)
 {
     ui->setupUi(this);
+
     initializeKeyMapDirectory();
     initUI();
 
+
     updateBootConfig(true);
+
 
     // Intel Mac 上如果配置文件遗留 decodeMode=1，强制重置为 0
     // （VideoToolbox 选项在 initUI() 中已被移除）
@@ -131,12 +276,14 @@ Dialog::Dialog(QWidget *parent) : QWidget(parent), ui(new Ui::Widget)
 #endif
 
     on_useSingleModeCheck_clicked();
+
     if (QScreen *screen = QGuiApplication::primaryScreen()) {
         const QRect availableGeometry = screen->availableGeometry();
         move(availableGeometry.x() + (availableGeometry.width() - width()) / 2,
              availableGeometry.y() + (availableGeometry.height() - height()) / 2);
     }
     on_updateDevice_clicked();
+
 
     connect(&m_autoUpdatetimer, &QTimer::timeout, this, &Dialog::on_updateDevice_clicked);
     if (ui->autoUpdatecheckBox->isChecked()) {
@@ -235,6 +382,7 @@ Dialog::~Dialog()
 
 void Dialog::initUI()
 {
+
     setAttribute(Qt::WA_DeleteOnClose);
     //setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
 
@@ -316,6 +464,7 @@ void Dialog::initUI()
                 this, &Dialog::showPortEditMenu);
     }
     initAdvancedDisplayUi();
+
 
     auto *configTabs = new QTabWidget(ui->rightWidget);
     auto *startConfigPage = new QWidget(configTabs);
@@ -401,39 +550,99 @@ void Dialog::initUI()
     relayLayout->addRow(relayStart);
     connect(relayStart, &QPushButton::clicked, this, &Dialog::onRemoteConnect);
     m_devicesNam = new QNetworkAccessManager(this);
+
     m_devicesGroup = new QGroupBox(tr("Dispositivos"), m_relayGroup);
+    m_devicesGroup->setObjectName(QStringLiteral("relayPresenceGroup"));
+    m_devicesGroup->setStyleSheet(QStringLiteral(
+        "QGroupBox#relayPresenceGroup { background: #151e2c; border: 1px solid #34445c;"
+        "border-radius: 12px; margin-top: 13px; padding-top: 7px; color: #edf3fa;"
+        "font-weight: 600; }"
+        "QGroupBox#relayPresenceGroup::title { subcontrol-origin: margin; left: 13px;"
+        "padding: 0 6px; }"
+        "QListWidget#relayDevicesList { background: transparent; border: none;"
+        "outline: 0; color: #edf3fa; }"
+        "QListWidget#relayDevicesList::item { border: none; background: transparent; }"
+        "QPushButton#relayDevicesRefreshButton { background: #215fa6; color: white;"
+        "border: none; border-radius: 7px; padding: 8px 16px; font-weight: 600; }"
+        "QPushButton#relayDevicesRefreshButton:hover { background: #2d75c2; }"
+        "QPushButton#relayDevicesRefreshButton:disabled { background: #37475e;"
+        "color: #a6b4c5; }"
+        "QLabel#relayDevicesSummary { color: #a5b8ce; font-size: 12px;"
+        "font-weight: normal; }"));
+
     auto *devicesLayout = new QVBoxLayout(m_devicesGroup);
-    m_devicesList = new QListWidget(m_devicesGroup);
-    m_devicesList->setObjectName(QStringLiteral("relayDevicesList"));
-    m_devicesList->setMinimumHeight(82);
-    devicesLayout->addWidget(m_devicesList);
+    devicesLayout->setContentsMargins(10, 15, 10, 10);
+    devicesLayout->setSpacing(8);
+    auto *devicesHeader = new QHBoxLayout();
+    m_devicesSummary = new QLabel(tr("Dispositivos vinculados"), m_devicesGroup);
+    m_devicesSummary->setObjectName(QStringLiteral("relayDevicesSummary"));
+    devicesHeader->addWidget(m_devicesSummary, 1);
     m_devicesRefreshBtn = new QPushButton(tr("Atualizar"), m_devicesGroup);
     m_devicesRefreshBtn->setObjectName(QStringLiteral("relayDevicesRefreshButton"));
-    devicesLayout->addWidget(m_devicesRefreshBtn);
+    devicesHeader->addWidget(m_devicesRefreshBtn);
+    devicesLayout->addLayout(devicesHeader);
+    m_devicesList = new QListWidget(m_devicesGroup);
+    m_devicesList->setObjectName(QStringLiteral("relayDevicesList"));
+    m_devicesList->setItemDelegate(new DevicePresenceDelegate(m_devicesList));
+
+    m_devicesList->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    m_devicesList->setUniformItemSizes(true);
+    m_devicesList->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_devicesList->setMinimumHeight(174);
+    m_devicesList->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    devicesLayout->addWidget(m_devicesList);
     relayLayout->addRow(m_devicesGroup);
+
     connect(m_devicesRefreshBtn, &QPushButton::clicked,
             this, &Dialog::refreshDeviceList);
     connect(m_devicesList, &QListWidget::itemDoubleClicked, this,
             [this](QListWidgetItem *item) {
-        if (item && m_relayDeviceIdEdit) {
-            m_relayDeviceIdEdit->setText(item->data(Qt::UserRole).toString());
+        if (item && m_relayDeviceIdEdit && !item->data(Qt::UserRole).toString().isEmpty()) {
+            selectRelayDevice(item->data(Qt::UserRole).toString());
         }
     });
     connect(m_devicesList, &QListWidget::itemClicked, this,
             [this](QListWidgetItem *item) {
-        if (item) m_relayDeviceIdEdit->setText(item->data(Qt::UserRole).toString());
+        if (item && !item->data(Qt::UserRole).toString().isEmpty())
+            selectRelayDevice(item->data(Qt::UserRole).toString());
+    });
+    connect(m_devicesList, &QListWidget::currentItemChanged, this,
+            [this](QListWidgetItem *current, QListWidgetItem *) {
+        if (current && !current->data(Qt::UserRole).toString().isEmpty())
+            selectRelayDevice(current->data(Qt::UserRole).toString());
+    });
+    connect(m_devicesList, &QListWidget::itemSelectionChanged, this, [this]() {
+        const QList<QListWidgetItem *> selected = m_devicesList->selectedItems();
+        if (!selected.isEmpty()
+                && !selected.first()->data(Qt::UserRole).toString().isEmpty()) {
+            selectRelayDevice(selected.first()->data(Qt::UserRole).toString());
+        }
     });
     const auto invalidateDevices = [this]() {
         ++m_relayDevicesGeneration;
         m_devicesList->clear();
         m_relayDeviceIdEdit->clear();
+        m_devicesSummary->setText(tr("Atualize para ver dispositivos"));
+        m_cachedDevices = QJsonArray();
+        updateDeviceDetails();
     };
     connect(m_relayHostEdit, &QLineEdit::textChanged, this, invalidateDevices);
     connect(m_relayTokenEdit, &QLineEdit::textChanged, this, invalidateDevices);
     connect(m_relayCtlPortSpin, QOverload<int>::of(&QSpinBox::valueChanged),
             this, invalidateDevices);
+
     ui->verticalLayout_5->addWidget(m_relayGroup);
     startConfigLayout->addWidget(ui->configGroupBox);
+    for (QWidget *fieldRow : {ui->configWidget1, ui->configWidgetCodec,
+                             ui->configWidget5, ui->configWidget2}) {
+        fieldRow->setMaximumHeight(54);
+        fieldRow->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    }
+    ui->configWidget3->setMaximumHeight(108);
+    ui->configWidget3->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    ui->configGroupBox->setMaximumHeight(505);
+    ui->configGroupBox->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    startConfigLayout->addStretch();
     advancedDisplayLayout->addWidget(m_advancedDisplayGroup);
     advancedDisplayLayout->addStretch();
     initAdvancedConfigUi(advancedConfigPage);
@@ -468,8 +677,421 @@ void Dialog::initUI()
     ui->verticalLayout_4->setStretch(2, 1);
     ui->verticalLayout_6->setStretch(0, 1);
 
+    buildPanelShell(configTabs);
+
     // Auto-fetch fixed code on startup
     QTimer::singleShot(500, this, &Dialog::fetchFixedCode);
+}
+
+void Dialog::buildPanelShell(QWidget *settingsTabs)
+{
+
+    ui->verticalLayout_5->removeWidget(m_relayGroup);
+    ui->verticalLayout_6->removeWidget(settingsTabs);
+    auto *relayForm = qobject_cast<QFormLayout *>(m_relayGroup->layout());
+    if (relayForm) relayForm->removeWidget(m_devicesGroup);
+    ui->leftWidget->hide();
+    ui->rightWidget->hide();
+
+    setObjectName(QStringLiteral("panelRoot"));
+    setWindowTitle(tr("Painel de dispositivos — Android | QtScrcpy"));
+    setMinimumSize(1060, 730);
+    resize(1380, 890);
+    setStyleSheet(QStringLiteral(
+        "QWidget#panelRoot { background: #151d2b; color: #e4ebf6; }"
+        "QWidget#panelShell { background: #171f2e; color: #e4ebf6;"
+        "font-family: 'Segoe UI'; }"
+        "QWidget#panelPage { background: #171f2e; }"
+        "QWidget#panelShell QLabel { border: none; background: transparent; }"
+        "QFrame#panelTop { background: #171f2e; border-bottom: 1px solid #2a3649; }"
+        "QFrame#panelSidebar { background: #101824; border-right: 1px solid #2a3547; }"
+        "QFrame#panelSurface { background: #171f2e; border: 1px solid #304056;"
+        "border-radius: 12px; }"
+        "QFrame#panelActivity { background: #171f2e; border-top: 1px solid #2b374a; }"
+        "QLabel#panelBrand { color: #f0f4fa; font-size: 15px; font-weight: 600; }"
+        "QLabel#panelMuted { color: #94a5bd; font-size: 12px; }"
+        "QLabel#panelSection { color: #8498b2; font-size: 11px; font-weight: 600; }"
+        "QLabel#panelPageTitle { color: #edf3fb; font-size: 20px; font-weight: 600; }"
+        "QLabel#panelPageSubtitle { color: #9aabc3; font-size: 12px; }"
+        "QLabel#panelMetric { color: #e9eff9; font-size: 16px; font-weight: 600; }"
+        "QLabel#panelPresence { color: #9eafc7; background: #202d40;"
+        "border: 1px solid #354660; border-radius: 9px; padding: 7px 12px; }"
+        "QPushButton#panelNav { color: #93a4bb; background: transparent;"
+        "border: none; border-radius: 8px; text-align: left; padding: 11px 13px;"
+        "font-size: 13px; }"
+        "QPushButton#panelNav:hover { color: #edf3fb; background: #1b293b; }"
+        "QPushButton#panelNav:disabled { color: #748196; }"
+        "QGroupBox#relayConnectionGroup { color: #eaf0f9; background: #1b2738;"
+        "border: 1px solid #34465e; border-radius: 10px; margin-top: 16px;"
+        "padding-top: 9px; font-weight: 600; }"
+        "QGroupBox#relayConnectionGroup::title { subcontrol-origin: margin;"
+        "left: 12px; padding: 0 7px; }"
+        "QGroupBox#configGroupBox { background: #1b2738; color: #e4edf8;"
+        "border: 1px solid #34465e; border-radius: 10px; margin-top: 15px;"
+        "padding: 8px; }"
+        "QGroupBox#configGroupBox::title { subcontrol-origin: margin;"
+        "left: 12px; padding: 0 7px; }"
+        "QLineEdit, QSpinBox, QComboBox { background: #111b2a; color: #e4edf8;"
+        "border: 1px solid #36475c; border-radius: 6px; padding: 6px; }"
+        "QLineEdit:focus, QSpinBox:focus { border: 1px solid #559be5; }"
+        "QPushButton#relayConnectButton { background: #205eab; color: white;"
+        "font-weight: 600; border: 0; border-radius: 8px; padding: 10px; }"
+        "QPushButton#relayConnectButton:hover { background: #2d79cb; }"
+        "QTextEdit#panelActivityText { background: transparent; color: #91a3bb;"
+        "border: none; font-family: Consolas, monospace; font-size: 12px; }"
+        "QTabWidget::pane { background: #1a2535; border: 1px solid #34465e; }"
+        "QTabBar::tab { color: #a6b5c8; background: #1b2738;"
+        "padding: 9px 14px; border: 1px solid #34465e; }"
+        "QTabBar::tab:selected { color: #f4f8ff; background: #245eaa; }"));
+
+    ui->horizontalLayout_11->setContentsMargins(0, 0, 0, 0);
+    ui->horizontalLayout_11->setSpacing(0);
+    auto *shell = new QWidget(this);
+    shell->setObjectName(QStringLiteral("panelShell"));
+    auto *shellLayout = new QVBoxLayout(shell);
+    shellLayout->setContentsMargins(0, 0, 0, 0);
+    shellLayout->setSpacing(0);
+    ui->horizontalLayout_11->addWidget(shell);
+
+
+    auto *top = new QFrame(shell);
+    top->setObjectName(QStringLiteral("panelTop"));
+    top->setFixedHeight(78);
+    auto *topLayout = new QHBoxLayout(top);
+    topLayout->setContentsMargins(24, 8, 23, 8);
+    auto *logo = new QLabel(QStringLiteral("▣"), top);
+    logo->setStyleSheet(QStringLiteral("font-size: 26px; color: #66abf2;"));
+    topLayout->addWidget(logo);
+    auto *brandLines = new QVBoxLayout();
+    brandLines->setSpacing(2);
+    auto *brand = new QLabel(tr("Painel de dispositivos — Android"), top);
+    brand->setObjectName(QStringLiteral("panelBrand"));
+    brandLines->addWidget(brand);
+    auto *subtitle = new QLabel(tr("Console desktop  ·  QtScrcpy"), top);
+    subtitle->setObjectName(QStringLiteral("panelMuted"));
+    brandLines->addWidget(subtitle);
+    topLayout->addLayout(brandLines);
+    topLayout->addStretch(1);
+    auto *timeLabel = new QLabel(top);
+    timeLabel->setStyleSheet(QStringLiteral("color: #c7d5e6; font-family: Consolas;"));
+    const auto setClock = [timeLabel]() {
+        timeLabel->setText(QDateTime::currentDateTime().toString(QStringLiteral("HH:mm")));
+    };
+    setClock();
+    auto *clockTimer = new QTimer(top);
+    connect(clockTimer, &QTimer::timeout, this, setClock);
+    clockTimer->start(30000);
+    topLayout->addWidget(timeLabel);
+    topLayout->addSpacing(15);
+    m_headerPresence = new QLabel(tr("Aguardando atualização"), top);
+    m_headerPresence->setObjectName(QStringLiteral("panelPresence"));
+    m_headerPresence->setAlignment(Qt::AlignCenter);
+    topLayout->addWidget(m_headerPresence);
+    shellLayout->addWidget(top);
+
+
+    auto *body = new QWidget(shell);
+    auto *bodyLayout = new QHBoxLayout(body);
+    bodyLayout->setContentsMargins(0, 0, 0, 0);
+    bodyLayout->setSpacing(0);
+    auto *sidebar = new QFrame(body);
+    sidebar->setObjectName(QStringLiteral("panelSidebar"));
+    sidebar->setFixedWidth(238);
+    auto *sidebarLayout = new QVBoxLayout(sidebar);
+    sidebarLayout->setContentsMargins(14, 20, 14, 17);
+    sidebarLayout->setSpacing(5);
+    auto *sectionsLabel = new QLabel(tr("SEÇÕES"), sidebar);
+    sectionsLabel->setObjectName(QStringLiteral("panelSection"));
+    sidebarLayout->addWidget(sectionsLabel);
+    sidebarLayout->addSpacing(5);
+
+    const QStringList sectionNames = {
+        QStringLiteral("Dispositivos"), QStringLiteral("Estado do celular"),
+        QStringLiteral("Espelho de tela"), QStringLiteral("Câmera"),
+        QStringLiteral("Microfone"), QStringLiteral("Arquivos"),
+        QStringLiteral("Ações remotas"), QStringLiteral("Configurações")
+    };
+    const QStringList sectionSymbols = {
+        QStringLiteral("▣"), QStringLiteral("▥"), QStringLiteral("▧"),
+        QStringLiteral("◉"), QStringLiteral("◎"), QStringLiteral("◫"),
+        QStringLiteral("◇"), QStringLiteral("⚙")
+    };
+    for (int i = 0; i < sectionNames.size(); ++i) {
+        if (i == 7) sidebarLayout->addSpacing(9);
+        auto *button = new QPushButton(sectionSymbols.at(i) + QStringLiteral("    ")
+                                      + sectionNames.at(i), sidebar);
+        button->setObjectName(QStringLiteral("panelNav"));
+        button->setFixedHeight(43);
+        button->setCursor(Qt::PointingHandCursor);
+        const int page = i;
+        connect(button, &QPushButton::clicked, this, [this, page]() {
+            showPanelPage(page);
+        });
+        m_navButtons.append(button);
+        sidebarLayout->addWidget(button);
+    }
+    sidebarLayout->addStretch(1);
+    auto *linkedLabel = new QLabel(tr("DISPOSITIVO VINCULADO"), sidebar);
+    linkedLabel->setObjectName(QStringLiteral("panelSection"));
+    sidebarLayout->addWidget(linkedLabel);
+    m_sidebarDevice = new QLabel(tr("Nenhum celular selecionado\nUse “Dispositivos” para vincular"), sidebar);
+    m_sidebarDevice->setObjectName(QStringLiteral("panelMuted"));
+    m_sidebarDevice->setWordWrap(true);
+    sidebarLayout->addWidget(m_sidebarDevice);
+    bodyLayout->addWidget(sidebar);
+
+
+    m_mainPages = new QStackedWidget(body);
+    m_mainPages->setObjectName(QStringLiteral("panelPages"));
+    bodyLayout->addWidget(m_mainPages, 1);
+    shellLayout->addWidget(body, 1);
+
+    auto *activity = new QFrame(shell);
+    activity->setObjectName(QStringLiteral("panelActivity"));
+    activity->setFixedHeight(168);
+    auto *activityLayout = new QVBoxLayout(activity);
+    activityLayout->setContentsMargins(19, 10, 19, 10);
+    activityLayout->setSpacing(4);
+    auto *activityTitle = new QHBoxLayout();
+    auto *activityHeading = new QLabel(tr("◇  Atividade do painel"), activity);
+    activityHeading->setStyleSheet(QStringLiteral("color: #dce6f5; font-weight: 600;"));
+    activityTitle->addWidget(activityHeading);
+    activityTitle->addStretch(1);
+    auto *activityHint = new QLabel(tr("registros locais · atualizados em tempo real"), activity);
+    activityHint->setObjectName(QStringLiteral("panelMuted"));
+    activityTitle->addWidget(activityHint);
+    activityLayout->addLayout(activityTitle);
+    ui->outEdit->setObjectName(QStringLiteral("panelActivityText"));
+    activityLayout->addWidget(ui->outEdit, 1);
+    ui->outEdit->show();
+    shellLayout->addWidget(activity);
+
+
+    m_relayGroup->setObjectName(QStringLiteral("relayConnectionGroup"));
+    m_relayGroup->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    m_relayGroup->setMinimumWidth(315);
+    m_relayGroup->setMaximumWidth(410);
+    m_devicesGroup->setMinimumWidth(320);
+    m_devicesGroup->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    auto *devicesPage = new QWidget(m_mainPages);
+    devicesPage->setObjectName(QStringLiteral("panelPage"));
+    auto *devicesLayout = new QVBoxLayout(devicesPage);
+    devicesLayout->setContentsMargins(19, 18, 19, 17);
+    devicesLayout->setSpacing(12);
+    auto *deviceTitle = new QLabel(tr("Dispositivos vinculados"), devicesPage);
+    deviceTitle->setObjectName(QStringLiteral("panelPageTitle"));
+    devicesLayout->addWidget(deviceTitle);
+    auto *deviceSubtitle = new QLabel(tr("Selecione o aparelho e consulte seu estado em tempo real."), devicesPage);
+    deviceSubtitle->setObjectName(QStringLiteral("panelPageSubtitle"));
+    devicesLayout->addWidget(deviceSubtitle);
+    auto *deviceColumns = new QHBoxLayout();
+    deviceColumns->setSpacing(14);
+    deviceColumns->addWidget(m_relayGroup, 2);
+    deviceColumns->addWidget(m_devicesGroup, 3);
+    devicesLayout->addLayout(deviceColumns, 1);
+    m_mainPages->addWidget(devicesPage);
+
+
+    auto *statusPage = new QWidget(m_mainPages);
+    statusPage->setObjectName(QStringLiteral("panelPage"));
+    auto *statusLayout = new QVBoxLayout(statusPage);
+    statusLayout->setContentsMargins(14, 14, 14, 14);
+    auto *statusSurface = new QFrame(statusPage);
+    statusSurface->setObjectName(QStringLiteral("panelSurface"));
+    auto *statusContents = new QVBoxLayout(statusSurface);
+    statusContents->setContentsMargins(25, 24, 25, 24);
+    m_statusEmpty = new QLabel(tr("▣  Nenhum celular selecionado\n\n"
+                                 "Abra “Dispositivos” e selecione um aparelho."), statusSurface);
+    m_statusEmpty->setAlignment(Qt::AlignCenter);
+    m_statusEmpty->setStyleSheet(QStringLiteral("color: #c1cddd; font-size: 15px;"));
+    statusContents->addWidget(m_statusEmpty, 1);
+    m_statusDetails = new QFrame(statusSurface);
+    auto *detailsLayout = new QVBoxLayout(m_statusDetails);
+    detailsLayout->setContentsMargins(10, 10, 10, 10);
+    detailsLayout->setSpacing(18);
+    m_statusHeading = new QLabel(m_statusDetails);
+    m_statusHeading->setObjectName(QStringLiteral("panelPageTitle"));
+    detailsLayout->addWidget(m_statusHeading);
+    m_statusSubheading = new QLabel(m_statusDetails);
+    m_statusSubheading->setObjectName(QStringLiteral("panelPageSubtitle"));
+    detailsLayout->addWidget(m_statusSubheading);
+    auto *metrics = new QGridLayout();
+    metrics->setSpacing(15);
+    const QStringList metricNames = {QStringLiteral("BATERIA"), QStringLiteral("REDE"),
+                                      QStringLiteral("TELA"), QStringLiteral("ÚLTIMO VISTO")};
+    QLabel *metricValues[4] = {};
+    for (int i = 0; i < 4; ++i) {
+        auto *metricFrame = new QFrame(m_statusDetails);
+        metricFrame->setObjectName(QStringLiteral("panelSurface"));
+        metricFrame->setMinimumHeight(128);
+        auto *metricLayout = new QVBoxLayout(metricFrame);
+        metricLayout->setContentsMargins(17, 17, 17, 17);
+        auto *metricTitle = new QLabel(metricNames.at(i), metricFrame);
+        metricTitle->setObjectName(QStringLiteral("panelSection"));
+        metricLayout->addWidget(metricTitle);
+        metricValues[i] = new QLabel(metricFrame);
+        metricValues[i]->setObjectName(QStringLiteral("panelMetric"));
+        metricLayout->addWidget(metricValues[i]);
+        metricLayout->addStretch();
+        metrics->addWidget(metricFrame, i / 2, i % 2);
+    }
+    m_statusBattery = metricValues[0];
+    m_statusNetwork = metricValues[1];
+    m_statusScreen = metricValues[2];
+    m_statusSeen = metricValues[3];
+    detailsLayout->addLayout(metrics);
+    detailsLayout->addStretch();
+    statusContents->addWidget(m_statusDetails);
+    m_statusDetails->hide();
+    statusLayout->addWidget(statusSurface);
+    m_mainPages->addWidget(statusPage);
+
+
+    auto *screenPage = new QWidget(m_mainPages);
+    screenPage->setObjectName(QStringLiteral("panelPage"));
+    auto *screenLayout = new QVBoxLayout(screenPage);
+    screenLayout->setContentsMargins(14, 14, 14, 14);
+    auto *screenSurface = new QFrame(screenPage);
+    screenSurface->setObjectName(QStringLiteral("panelSurface"));
+    auto *screenContents = new QVBoxLayout(screenSurface);
+    screenContents->setContentsMargins(35, 32, 35, 32);
+    auto *screenTitle = new QLabel(tr("Espelho de tela"), screenSurface);
+    screenTitle->setObjectName(QStringLiteral("panelPageTitle"));
+    screenContents->addWidget(screenTitle);
+    auto *screenDescription = new QLabel(
+                tr("Selecione um dispositivo vinculado para iniciar uma sessão remota. "
+                   "A autorização de captura no Android continua sendo necessária."), screenSurface);
+    screenDescription->setObjectName(QStringLiteral("panelPageSubtitle"));
+    screenDescription->setWordWrap(true);
+    screenContents->addWidget(screenDescription);
+    screenContents->addStretch();
+    auto *screenAction = new QPushButton(tr("Conectar ao dispositivo selecionado"), screenSurface);
+    screenAction->setObjectName(QStringLiteral("relayConnectButton"));
+    screenAction->setMinimumHeight(44);
+    screenAction->setMaximumWidth(360);
+    connect(screenAction, &QPushButton::clicked, this, &Dialog::onRemoteConnect);
+    screenContents->addWidget(screenAction, 0, Qt::AlignHCenter);
+    screenContents->addStretch();
+    screenLayout->addWidget(screenSurface);
+    m_mainPages->addWidget(screenPage);
+
+    const QStringList unavailable = {
+        QStringLiteral("Câmera"), QStringLiteral("Microfone"),
+        QStringLiteral("Arquivos"), QStringLiteral("Ações remotas")
+    };
+    for (const QString &name : unavailable) {
+        auto *page = new QWidget(m_mainPages);
+        page->setObjectName(QStringLiteral("panelPage"));
+        auto *pageLayout = new QVBoxLayout(page);
+        pageLayout->setContentsMargins(14, 14, 14, 14);
+        auto *surface = new QFrame(page);
+        surface->setObjectName(QStringLiteral("panelSurface"));
+        auto *content = new QVBoxLayout(surface);
+        content->setContentsMargins(25, 24, 25, 24);
+        auto *caption = new QLabel(name, surface);
+        caption->setObjectName(QStringLiteral("panelPageTitle"));
+        content->addWidget(caption);
+        auto *empty = new QLabel(tr("Esta função não está disponível nesta versão do cliente."),
+                                 surface);
+        empty->setAlignment(Qt::AlignCenter);
+        empty->setStyleSheet(QStringLiteral("color: #a6b7cf; font-size: 14px;"));
+        content->addWidget(empty, 1);
+        pageLayout->addWidget(surface);
+        m_mainPages->addWidget(page);
+    }
+
+    auto *settingsPage = new QWidget(m_mainPages);
+    settingsPage->setObjectName(QStringLiteral("panelPage"));
+    auto *settingsLayout = new QVBoxLayout(settingsPage);
+    settingsLayout->setContentsMargins(18, 17, 18, 17);
+    auto *settingsHeading = new QLabel(tr("Configurações do cliente"), settingsPage);
+    settingsHeading->setObjectName(QStringLiteral("panelPageTitle"));
+    settingsLayout->addWidget(settingsHeading);
+    settingsLayout->addWidget(settingsTabs, 1);
+    m_mainPages->addWidget(settingsPage);
+
+    showPanelPage(0);
+
+    QTimer::singleShot(850, this, &Dialog::refreshDeviceList);
+}
+
+void Dialog::showPanelPage(int index)
+{
+    if (!m_mainPages || index < 0 || index >= m_mainPages->count()) return;
+    m_mainPages->setCurrentIndex(index);
+    for (int i = 0; i < m_navButtons.size(); ++i) {
+        QPushButton *button = m_navButtons.at(i);
+        if (i == index) {
+            button->setStyleSheet(QStringLiteral(
+                "QPushButton#panelNav { background: #205b9d; color: #ffffff;"
+                "border-left: 4px solid #58adff; border-radius: 8px; text-align: left;"
+                "padding: 11px 9px; font-size: 13px; font-weight: 600; }"));
+        } else {
+            button->setStyleSheet(QString());
+        }
+    }
+    if (index == 1) updateDeviceDetails();
+}
+
+void Dialog::selectRelayDevice(const QString &deviceId)
+{
+    if (deviceId.isEmpty()) return;
+    m_relayDeviceIdEdit->setText(deviceId);
+    updateDeviceDetails();
+}
+
+void Dialog::updateDeviceDetails()
+{
+    if (!m_statusDetails || !m_statusEmpty || !m_sidebarDevice) return;
+    const QString selected = m_relayDeviceIdEdit->text();
+    QJsonObject device;
+    for (const QJsonValue &value : m_cachedDevices) {
+        if (!value.isObject()) continue;
+        const QJsonObject entry = value.toObject();
+        if (entry.value(QStringLiteral("device_id")).toString() == selected) {
+            device = entry;
+            break;
+        }
+    }
+    const bool found = !device.isEmpty();
+    m_statusDetails->setVisible(found);
+    m_statusEmpty->setVisible(!found);
+    if (!found) {
+        m_sidebarDevice->setText(tr("Nenhum celular selecionado\n"
+                                   "Use “Dispositivos” para vincular"));
+        return;
+    }
+
+    const QString model = device.value(QStringLiteral("model")).toString();
+    const QString deviceName = model.isEmpty() ? QStringLiteral("Android") : model;
+    const QString shortId = selected.left(8);
+    m_sidebarDevice->setText(deviceName + QStringLiteral("\nID ") + shortId);
+    m_statusHeading->setText(deviceName);
+    m_statusSubheading->setText(QStringLiteral("Identificação: ") + selected);
+
+    const int battery = device.value(QStringLiteral("battery")).toInt(-1);
+    const bool charging = device.value(QStringLiteral("charging")).toBool(false);
+    m_statusBattery->setText(battery < 0
+                             ? QStringLiteral("Não informado")
+                             : QStringLiteral("%1%  ·  %2").arg(battery)
+                               .arg(charging ? QStringLiteral("Carregando")
+                                             : QStringLiteral("Na bateria")));
+    const QString network = device.value(QStringLiteral("network")).toString().toLower();
+    QString networkName = QStringLiteral("Não informada");
+    if (network == QLatin1String("wifi")) networkName = QStringLiteral("Wi-Fi");
+    else if (network == QLatin1String("cellular")) networkName = QStringLiteral("Rede móvel");
+    else if (network == QLatin1String("ethernet")) networkName = QStringLiteral("Ethernet");
+    else if (network == QLatin1String("none")) networkName = QStringLiteral("Sem conexão");
+    m_statusNetwork->setText(networkName);
+
+    const QJsonValue screenValue = device.value(QStringLiteral("screen_on"));
+    m_statusScreen->setText(!screenValue.isBool()
+                            ? QStringLiteral("Não informada")
+                            : (screenValue.toBool() ? QStringLiteral("Ligada")
+                                                    : QStringLiteral("Desligada")));
+    m_statusSeen->setText(lastSeenSummary(
+                            device.value(QStringLiteral("last_seen")).toString()));
 }
 
 void Dialog::saveRelaySettings()
@@ -565,24 +1187,33 @@ void Dialog::refreshDeviceList()
 {
     const QString host = m_relayHostEdit->text().trimmed();
     if (host.isEmpty() || m_relayTokenEdit->text().trimmed().isEmpty()) {
+        m_devicesSummary->setText(tr("Configure o acesso ao relay"));
         outLog(tr("Configure host e token antes de listar dispositivos."));
         return;
     }
     QNetworkRequest request;
-    if (!prepareRelayRequest(QStringLiteral("/v1/devices"), request)) return;
+    if (!prepareRelayRequest(QStringLiteral("/v1/devices"), request)) {
+        m_devicesSummary->setText(tr("Falha ao preparar conexão"));
+        return;
+    }
     saveRelaySettings();
     ++m_relayDevicesGeneration;
     const quint64 generation = m_relayDevicesGeneration;
-    m_devicesList->clear();
-    m_relayDeviceIdEdit->clear();
+    m_devicesSummary->setText(tr("Consultando dispositivos…"));
+    m_devicesRefreshBtn->setText(tr("Atualizando…"));
     m_devicesRefreshBtn->setEnabled(false);
     QNetworkReply *reply = m_devicesNam->get(request);
+    QTimer::singleShot(15000, reply, [reply]() {
+        if (reply->isRunning()) reply->abort();
+    });
     connect(reply, &QNetworkReply::finished, this, [this, reply, generation]() {
         reply->deleteLater();
         m_devicesRefreshBtn->setEnabled(true);
+        m_devicesRefreshBtn->setText(tr("Atualizar"));
         if (generation != m_relayDevicesGeneration) return;
         const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         if (reply->error() != QNetworkReply::NoError || status != 200) {
+            m_devicesSummary->setText(tr("Não foi possível atualizar"));
             outLog(tr("Falha ao listar dispositivos (HTTP %1): %2")
                    .arg(status).arg(reply->errorString()));
             return;
@@ -591,53 +1222,95 @@ void Dialog::refreshDeviceList()
         QJsonParseError error;
         const QJsonDocument document = QJsonDocument::fromJson(body, &error);
         if (error.error != QJsonParseError::NoError || !document.isArray()) {
+            m_devicesSummary->setText(tr("Dados recebidos inválidos"));
             outLog(tr("Resposta inválida do relay."));
             return;
         }
+        const QString previousId = m_relayDeviceIdEdit->text();
         m_devicesList->clear();
         outLog(QStringLiteral("relay_devices_body=") + QString::fromUtf8(body));
         const QJsonArray devices = document.array();
+        m_cachedDevices = devices;
+        int count = 0;
+        int onlineCount = 0;
+        QListWidgetItem *previousItem = nullptr;
         for (const QJsonValue &value : devices) {
             if (!value.isObject()) continue;
             const QJsonObject entry = value.toObject();
             const QString deviceId = entry.value(QStringLiteral("device_id")).toString();
-            const QString status = entry.value(QStringLiteral("status")).toString();
+            const QString status = entry.value(QStringLiteral("status")).toString().toLower();
             if (deviceId.isEmpty()) continue;
 
-            QString label = deviceId;
-            QString details;
             const QString model = entry.value(QStringLiteral("model")).toString();
-            if (!model.isEmpty()) label += QStringLiteral(" (%1)").arg(model);
-
-            const int battery = entry.value(QStringLiteral("battery")).toInt(-1);
+            const int batteryValue = entry.value(QStringLiteral("battery")).toInt(-1);
+            const int battery = (batteryValue >= 0 && batteryValue <= 100)
+                    ? batteryValue : -1;
             const bool charging = entry.value(QStringLiteral("charging")).toBool(false);
-            const QString network = entry.value(QStringLiteral("network")).toString();
-            const bool screenOn = entry.value(QStringLiteral("screen_on")).toBool(false);
+            const QString network = entry.value(QStringLiteral("network")).toString().toLower();
+            const bool hasScreen = entry.value(QStringLiteral("screen_on")).isBool();
+            const QString lastSeen = entry.value(QStringLiteral("last_seen")).toString();
+            const QDateTime seenDate = QDateTime::fromString(lastSeen, Qt::ISODate);
+            const qint64 age = seenDate.isValid()
+                    ? seenDate.secsTo(QDateTime::currentDateTimeUtc()) : -1000;
+            const bool freshPresence = age >= -30 && age < 90;
+            const bool online = (status == QLatin1String("connected")
+                                 || status == QLatin1String("waiting")
+                                 || status == QLatin1String("online"))
+                    && (!seenDate.isValid() || freshPresence);
 
-            if (status == QLatin1String("online") || status == QLatin1String("connected")
-                    || status == QLatin1String("waiting")) {
-                label += QStringLiteral("  \u25CF");
-                if (battery >= 0)
-                    details += tr("Bateria %1%2").arg(battery)
-                        .arg(charging ? QStringLiteral(" \u26A1") : QString());
-                if (!network.isEmpty() && network != QLatin1String("none"))
-                    details += (details.isEmpty() ? QString() : QStringLiteral(" | "))
-                        + network.toUpper();
-                details += (details.isEmpty() ? QString() : QStringLiteral(" | "))
-                    + (screenOn ? tr("tela ON") : tr("tela OFF"));
-            } else {
-                label += QStringLiteral("  \u25CB");
-            }
-
+            const QString shownModel = model.isEmpty() ? QStringLiteral("Android") : model;
+            const QString shownStatus = online ? QStringLiteral("ONLINE")
+                                               : QStringLiteral("OFFLINE");
+            const QString label = QStringLiteral("%1 — ID %2 — %3 — Bateria %4 — %5 — %6 — %7")
+                    .arg(shownModel)
+                    .arg(deviceId.left(8))
+                    .arg(shownStatus)
+                    .arg(battery >= 0 ? QStringLiteral("%1%").arg(battery)
+                                      : QStringLiteral("--"))
+                    .arg(network.isEmpty() ? QStringLiteral("--") : network)
+                    .arg(hasScreen ? (entry.value(QStringLiteral("screen_on")).toBool()
+                                    ? QStringLiteral("Tela ON") : QStringLiteral("Tela OFF"))
+                                   : QStringLiteral("Tela --"))
+                    .arg(lastSeenSummary(lastSeen));
             auto *item = new QListWidgetItem(label, m_devicesList);
             item->setData(Qt::UserRole, deviceId);
-            if (!details.isEmpty()) item->setToolTip(details);
-            if (status != QLatin1String("offline"))
-                item->setForeground(QBrush(QColor(46, 139, 87)));
+            item->setData(DeviceModelRole, shownModel);
+            item->setData(DeviceOnlineRole, online);
+            item->setData(DeviceBatteryRole, battery);
+            item->setData(DeviceChargingRole, charging);
+            item->setData(DeviceNetworkRole, network);
+            if (hasScreen) item->setData(DeviceScreenRole,
+                                         entry.value(QStringLiteral("screen_on")).toBool());
+            item->setData(DeviceSeenRole, lastSeenSummary(lastSeen));
+            item->setToolTip(label + QStringLiteral("\n") + deviceId);
+            item->setSizeHint(QSize(0, 132));
+            if (deviceId == previousId) previousItem = item;
+            ++count;
+            if (online) ++onlineCount;
         }
         m_devicesList->sortItems();
-        qInfo() << "devices_list_loaded count=" << m_devicesList->count();
-        outLog(tr("Dispositivos listados: %1").arg(m_devicesList->count()));
+        if (previousItem) {
+            m_devicesList->setCurrentItem(previousItem);
+        } else {
+            m_relayDeviceIdEdit->clear();
+        }
+        if (!count) {
+            auto *empty = new QListWidgetItem(tr("Nenhum dispositivo disponível"), m_devicesList);
+            empty->setFlags(Qt::NoItemFlags);
+            empty->setSizeHint(QSize(0, 100));
+        }
+        m_devicesSummary->setText(count == 1 ? tr("1 dispositivo vinculado")
+                                             : tr("%1 dispositivos vinculados").arg(count));
+        m_headerPresence->setText(onlineCount == 1 ? tr("●  1 dispositivo online")
+                                     : tr("●  %1 dispositivos online").arg(onlineCount));
+        m_headerPresence->setStyleSheet(QStringLiteral(
+                "color: %1; background: #202d40; border: 1px solid #34475e;"
+                "border-radius: 9px; padding: 7px 12px;")
+                .arg(onlineCount > 0 ? QStringLiteral("#45d7a1")
+                                      : QStringLiteral("#f27883")));
+        updateDeviceDetails();
+        qInfo() << "devices_list_loaded count=" << count;
+        outLog(tr("Dispositivos listados: %1").arg(count));
     });
 }
 
@@ -1879,6 +2552,7 @@ void Dialog::on_updateNameBtn_clicked()
 
 void Dialog::on_useSingleModeCheck_clicked()
 {
+    if (m_mainPages) return;
     if (ui->useSingleModeCheck->isChecked()) {
         ui->rightWidget->hide();
     } else {

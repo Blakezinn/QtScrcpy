@@ -7,6 +7,7 @@
 #include <QMenu>
 #include <QSystemTrayIcon>
 #include <QListWidget>
+#include <QJsonArray>
 #include <QTimer>
 
 
@@ -30,6 +31,8 @@ class QNetworkRequest;
 class QPushButton;
 class QSpinBox;
 class QLabel;
+class QStackedWidget;
+class QFrame;
 class Dialog : public QWidget
 {
     Q_OBJECT
@@ -118,6 +121,10 @@ private:
     void fetchFixedCode();
     void saveRelaySettings();
     bool prepareRelayRequest(const QString &endpoint, QNetworkRequest &request);
+    void buildPanelShell(QWidget *settingsTabs);
+    void showPanelPage(int index);
+    void selectRelayDevice(const QString &deviceId);
+    void updateDeviceDetails();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -136,6 +143,20 @@ private:
     QLabel *m_relayFixedCodeLabel = nullptr;
     quint64 m_relayDevicesGeneration = 0;
     QGroupBox *m_devicesGroup = nullptr;
+    QLabel *m_devicesSummary = nullptr;
+    QLabel *m_headerPresence = nullptr;
+    QLabel *m_sidebarDevice = nullptr;
+    QLabel *m_statusHeading = nullptr;
+    QLabel *m_statusSubheading = nullptr;
+    QLabel *m_statusBattery = nullptr;
+    QLabel *m_statusNetwork = nullptr;
+    QLabel *m_statusScreen = nullptr;
+    QLabel *m_statusSeen = nullptr;
+    QLabel *m_statusEmpty = nullptr;
+    QFrame *m_statusDetails = nullptr;
+    QStackedWidget *m_mainPages = nullptr;
+    QList<QPushButton *> m_navButtons;
+    QJsonArray m_cachedDevices;
     QListWidget *m_devicesList = nullptr;
     QPushButton *m_devicesRefreshBtn = nullptr;
     QNetworkAccessManager *m_devicesNam = nullptr;
