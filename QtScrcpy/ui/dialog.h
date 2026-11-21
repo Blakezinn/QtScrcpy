@@ -160,6 +160,7 @@ private:
     QListWidget *m_devicesList = nullptr;
     QPushButton *m_devicesRefreshBtn = nullptr;
     QNetworkAccessManager *m_devicesNam = nullptr;
+    QTimer *m_devicesRefreshTimer = nullptr;
     QComboBox *m_configLanguageBox = nullptr;
     QLineEdit *m_configTitleEdit = nullptr;
     QLineEdit *m_configPushPathEdit = nullptr;

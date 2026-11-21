@@ -595,6 +595,10 @@ void Dialog::initUI()
 
     connect(m_devicesRefreshBtn, &QPushButton::clicked,
             this, &Dialog::refreshDeviceList);
+    m_devicesRefreshTimer = new QTimer(this);
+    m_devicesRefreshTimer->setInterval(30000);
+    connect(m_devicesRefreshTimer, &QTimer::timeout, this, &Dialog::refreshDeviceList);
+    m_devicesRefreshTimer->start();
     connect(m_devicesList, &QListWidget::itemDoubleClicked, this,
             [this](QListWidgetItem *item) {
         if (item && m_relayDeviceIdEdit && !item->data(Qt::UserRole).toString().isEmpty()) {
