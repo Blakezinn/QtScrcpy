@@ -15,3 +15,5 @@ build-*
 userdata.ini
 Info_Mac.plist
 /ci/build_temp
+# graphify local (grafo de conhecimento gerado; regeneravel)
+graphify-out/
